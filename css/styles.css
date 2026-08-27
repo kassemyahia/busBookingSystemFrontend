@@ -1,0 +1,24 @@
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+}
+
+.transport-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+
+  background-size: 55px 55px;
+}
+
+/* Chrome autofill fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #020617;
+
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+}
