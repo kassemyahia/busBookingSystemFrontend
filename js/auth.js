@@ -1,12 +1,114 @@
-const auth = {
-  ACCESS_TOKEN_KEY: "transport_access_token",
+(() => {
+  const ACCESS_TOKEN_KEY = "transport_access_token";
 
-  REFRESH_TOKEN_KEY: "transport_refresh_token",
+  const REFRESH_TOKEN_KEY = "transport_refresh_token";
 
-  USER_KEY: "transport_user",
+  const USER_KEY = "transport_user";
 
-  async login(phone, password, rememberMe) {
-    const response = await api.request("/api/Auth/login", {
+  const REMEMBER_KEY = "transport_remember_me";
+
+  function pick(object, camelCase, pascalCase) {
+    return object?.[camelCase] ?? object?.[pascalCase] ?? null;
+  }
+
+  function clearStorage(storage) {
+    storage.removeItem(ACCESS_TOKEN_KEY);
+
+    storage.removeItem(REFRESH_TOKEN_KEY);
+
+    storage.removeItem(USER_KEY);
+  }
+
+  function getSessionStorage() {
+    if (
+      localStorage.getItem(ACCESS_TOKEN_KEY) ||
+      localStorage.getItem(REFRESH_TOKEN_KEY)
+    ) {
+      return localStorage;
+    }
+
+    if (
+      sessionStorage.getItem(ACCESS_TOKEN_KEY) ||
+      sessionStorage.getItem(REFRESH_TOKEN_KEY)
+    ) {
+      return sessionStorage;
+    }
+
+    const remembered = localStorage.getItem(REMEMBER_KEY) === "true";
+
+    return remembered ? localStorage : sessionStorage;
+  }
+
+  function saveSession(response, rememberMe = false) {
+    const accessToken = pick(response, "accessToken", "AccessToken");
+
+    const refreshToken = pick(response, "refreshToken", "RefreshToken");
+
+    const user = pick(response, "user", "User");
+
+    if (!accessToken) {
+      throw new Error("The API did not return an access token.");
+    }
+
+    clearStorage(localStorage);
+
+    clearStorage(sessionStorage);
+
+    const storage = rememberMe ? localStorage : sessionStorage;
+
+    storage.setItem(ACCESS_TOKEN_KEY, accessToken);
+
+    if (refreshToken) {
+      storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    }
+
+    if (user) {
+      storage.setItem(USER_KEY, JSON.stringify(user));
+    }
+
+    localStorage.setItem(REMEMBER_KEY, rememberMe ? "true" : "false");
+  }
+
+  function getAccessToken() {
+    return getSessionStorage().getItem(ACCESS_TOKEN_KEY);
+  }
+
+  function getRefreshToken() {
+    return getSessionStorage().getItem(REFRESH_TOKEN_KEY);
+  }
+
+  function getUser() {
+    const raw = getSessionStorage().getItem(USER_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  function updateStoredUser(user) {
+    if (!user) {
+      return;
+    }
+
+    getSessionStorage().setItem(USER_KEY, JSON.stringify(user));
+  }
+
+  function clearSession() {
+    clearStorage(localStorage);
+
+    clearStorage(sessionStorage);
+
+    localStorage.removeItem(REMEMBER_KEY);
+  }
+
+  async function login(phone, password, rememberMe = false) {
+    const response = await window.api.request("/api/Auth/login", {
       method: "POST",
 
       body: JSON.stringify({
@@ -15,110 +117,109 @@ const auth = {
       }),
     });
 
-    this.saveLogin(response, rememberMe);
+    saveSession(response, rememberMe);
 
     return response;
-  },
+  }
 
-  saveLogin(response, rememberMe) {
-    /*
-            ASP.NET may serialize as:
+  async function register(data, rememberMe = false) {
+    const response = await window.api.request("/api/Auth/register", {
+      method: "POST",
 
-            accessToken
+      body: JSON.stringify(data),
+    });
 
-            OR
+    saveSession(response, rememberMe);
 
-            AccessToken
+    return response;
+  }
 
-            so we support both.
-        */
+  async function refreshSession() {
+    const storage = getSessionStorage();
 
-    const accessToken = response.accessToken ?? response.AccessToken;
+    const refreshToken = storage.getItem(REFRESH_TOKEN_KEY);
 
-    const refreshToken = response.refreshToken ?? response.RefreshToken;
-
-    const user = response.user ?? response.User;
-
-    if (!accessToken) {
-      throw new Error("Access token was not returned by the server.");
-    }
-
-    /*
-            Remember me checked:
-            localStorage
-
-            Not checked:
-            sessionStorage
-        */
-
-    const storage = rememberMe ? localStorage : sessionStorage;
-
-    /*
-            Remove any previous login
-        */
-
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-
-    localStorage.removeItem(this.USER_KEY);
-
-    sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
-
-    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
-
-    sessionStorage.removeItem(this.USER_KEY);
-
-    /*
-            Store new login
-        */
-
-    storage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-
-    if (refreshToken) {
-      storage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    }
-
-    if (user) {
-      storage.setItem(this.USER_KEY, JSON.stringify(user));
-    }
-
-    localStorage.setItem(
-      "transport_remember_me",
-      rememberMe ? "true" : "false",
-    );
-  },
-
-  getStorage() {
-    const rememberMe = localStorage.getItem("transport_remember_me") === "true";
-
-    return rememberMe ? localStorage : sessionStorage;
-  },
-
-  getAccessToken() {
-    return this.getStorage().getItem(this.ACCESS_TOKEN_KEY);
-  },
-
-  getRefreshToken() {
-    return this.getStorage().getItem(this.REFRESH_TOKEN_KEY);
-  },
-
-  getUser() {
-    const user = this.getStorage().getItem(this.USER_KEY);
-
-    if (!user) {
-      return null;
+    if (!refreshToken) {
+      return false;
     }
 
     try {
-      return JSON.parse(user);
-    } catch {
-      return null;
-    }
-  },
+      const response = await window.api.request("/api/Auth/refresh-token", {
+        method: "POST",
 
-  logout() {
-    localStorage.clear();
-    sessionStorage.clear();
-  },
-};
+        skipRefresh: true,
+
+        body: JSON.stringify({
+          RefreshToken: refreshToken,
+        }),
+      });
+
+      const accessToken = pick(response, "accessToken", "AccessToken");
+
+      const newRefreshToken = pick(response, "refreshToken", "RefreshToken");
+
+      if (!accessToken) {
+        throw new Error("Refresh failed.");
+      }
+
+      storage.setItem(ACCESS_TOKEN_KEY, accessToken);
+
+      if (newRefreshToken) {
+        storage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+      }
+
+      return true;
+    } catch {
+      clearSession();
+
+      return false;
+    }
+  }
+
+  async function me() {
+    return window.api.request("/api/Auth/me", {
+      method: "GET",
+      auth: true,
+    });
+  }
+
+  async function logout() {
+    try {
+      await window.api.request("/api/Auth/logout", {
+        method: "POST",
+        auth: true,
+        skipRefresh: true,
+      });
+    } catch (error) {
+      console.warn("Server logout failed:", error);
+    } finally {
+      clearSession();
+
+      window.location.href = "./login.html";
+    }
+  }
+
+  function requireAuth() {
+    if (!getAccessToken()) {
+      window.location.replace("./login.html");
+
+      return false;
+    }
+
+    return true;
+  }
+
+  window.auth = {
+    login,
+    register,
+    refreshSession,
+    me,
+    logout,
+    requireAuth,
+    getAccessToken,
+    getRefreshToken,
+    getUser,
+    updateStoredUser,
+    clearSession,
+  };
+})();

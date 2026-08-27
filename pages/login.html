@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>BusBooking | Login</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <main class="min-h-screen lg:grid lg:grid-cols-2">
+      <!-- LEFT SIDE -->
+      <section
+        class="relative hidden overflow-hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between"
+      >
+        <div class="transport-grid absolute inset-0 opacity-50"></div>
+
+        <div
+          class="absolute -left-20 top-20 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl"
+        ></div>
+
+        <div
+          class="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl"
+        ></div>
+
+        <!-- Logo -->
+        <a href="./login.html" class="relative z-10 flex items-center gap-3">
+          <span
+            class="grid h-11 w-11 place-items-center rounded-xl bg-white font-bold text-slate-950"
+          >
+            B
+          </span>
+
+          <span class="text-xl font-bold"> BusBooking </span>
+        </a>
+
+        <!-- Main text -->
+        <div class="relative z-10 max-w-xl">
+          <p
+            class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300"
+          >
+            Your journey starts here
+          </p>
+
+          <h1 class="text-5xl font-bold leading-tight tracking-tight">
+            Travel smarter.
+
+            <span class="block text-slate-400"> Book with confidence. </span>
+          </h1>
+
+          <p class="mt-6 max-w-lg text-lg leading-8 text-slate-300">
+            Find available trips, reserve your seat, complete payment and manage
+            your tickets from one simple place.
+          </p>
+
+          <div class="mt-10 grid grid-cols-3 gap-3">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="font-semibold">Trips</p>
+
+              <p class="mt-1 text-xs text-slate-400">Find routes</p>
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="font-semibold">Booking</p>
+
+              <p class="mt-1 text-xs text-slate-400">Reserve seats</p>
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="font-semibold">Tickets</p>
+
+              <p class="mt-1 text-xs text-slate-400">Manage travel</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="relative z-10 text-sm text-slate-500">
+          © <span id="year"></span> BusBooking
+        </p>
+      </section>
+
+      <!-- RIGHT SIDE -->
+      <section
+        class="flex min-h-screen items-center justify-center px-5 py-12 sm:px-8"
+      >
+        <div class="w-full max-w-md">
+          <!-- Mobile logo -->
+          <a
+            href="./login.html"
+            class="mb-10 flex items-center gap-3 lg:hidden"
+          >
+            <span
+              class="grid h-10 w-10 place-items-center rounded-xl bg-slate-950 font-bold text-white"
+            >
+              B
+            </span>
+
+            <span class="text-xl font-bold"> BusBooking </span>
+          </a>
+
+          <!-- Heading -->
+          <div class="mb-8">
+            <p class="mb-2 text-sm font-semibold text-cyan-700">Welcome back</p>
+
+            <h2 class="text-4xl font-bold tracking-tight text-slate-950">
+              Sign in
+            </h2>
+
+            <p class="mt-3 text-sm leading-6 text-slate-500">
+              Enter your phone number and password to continue.
+            </p>
+          </div>
+
+          <!-- Alert -->
+          <div
+            id="alert"
+            class="mb-5 hidden rounded-xl border px-4 py-3 text-sm"
+          ></div>
+
+          <!-- Login form -->
+          <form id="loginForm" class="space-y-5" novalidate>
+            <!-- Phone -->
+            <div>
+              <label
+                for="phone"
+                class="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Phone number
+              </label>
+
+              <input
+                id="phone"
+                type="tel"
+                inputmode="numeric"
+                maxlength="10"
+                autocomplete="tel"
+                placeholder="09XXXXXXXX"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+              />
+
+              <p class="mt-2 text-xs text-slate-400">
+                Phone must start with 09 and contain 10 digits.
+              </p>
+
+              <p
+                id="phoneError"
+                class="mt-2 hidden text-xs font-medium text-red-600"
+              ></p>
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label
+                for="password"
+                class="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Password
+              </label>
+
+              <div class="relative">
+                <input
+                  id="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Enter your password"
+                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-16 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                />
+
+                <button
+                  id="togglePassword"
+                  type="button"
+                  class="absolute inset-y-0 right-0 px-4 text-sm font-semibold text-slate-400 hover:text-slate-950"
+                >
+                  Show
+                </button>
+              </div>
+
+              <p
+                id="passwordError"
+                class="mt-2 hidden text-xs font-medium text-red-600"
+              ></p>
+            </div>
+
+            <!-- Remember -->
+            <label
+              class="flex cursor-pointer items-center gap-3 text-sm text-slate-600"
+            >
+              <input
+                id="rememberMe"
+                type="checkbox"
+                class="h-4 w-4 rounded border-slate-300"
+              />
+
+              Keep me signed in
+            </label>
+
+            <!-- Submit -->
+            <button
+              id="loginButton"
+              type="submit"
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <svg
+                id="spinner"
+                class="hidden h-5 w-5 animate-spin"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                  fill="none"
+                ></circle>
+
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+
+              <span id="loginButtonText"> Sign in </span>
+            </button>
+          </form>
+
+          <!-- Register link -->
+          <div class="mt-8 border-t border-slate-200 pt-6 text-center">
+            <p class="text-sm text-slate-500">
+              Don't have an account?
+
+              <a
+                href="./register.html"
+                class="font-semibold text-slate-950 hover:underline"
+              >
+                Register
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/login.js"></script>
+  </body>
+</html>

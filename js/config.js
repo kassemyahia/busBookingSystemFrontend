@@ -1,6 +1,5 @@
-window.APP_CONFIG = {
+window.APP_CONFIG = Object.freeze({
   API_BASE_URL: "https://localhost:7165",
 
-  // Change this later when we create trips.html
-  AFTER_LOGIN_URL: null,
-};
+  AFTER_LOGIN_URL: "./trips.html",
+});
