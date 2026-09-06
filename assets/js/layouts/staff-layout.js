@@ -31,7 +31,7 @@
       .filter(([p]) => role === "Manager" || !managerOnly.has(p))
       .map(
         ([p, l]) =>
-          `<a href="./${p}" class="block rounded-xl px-4 py-2.5 text-sm font-medium ${p === page ? "bg-teal-600 text-slate-950" : "text-slate-300 hover:bg-white/10"}">${l}</a>`,
+          `<a href="./${p}" class="block rounded-xl px-4 py-2.5 text-sm font-medium ${p === page ? "bg-teal-600 text-white" : "text-slate-300 hover:bg-white/10"}">${l}</a>`,
       )
       .join("");
     document.getElementById("staffShell").innerHTML =

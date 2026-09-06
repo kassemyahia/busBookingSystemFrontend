@@ -60,6 +60,12 @@
     if (root)
       root.innerHTML = `<footer class="border-t border-slate-200 bg-white"><div class="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-7 text-sm text-slate-400 sm:flex-row sm:justify-between sm:px-6 lg:px-8"><p>© ${new Date().getFullYear()} BusBooking</p><p>Reliable journeys. Simple booking.</p></div></footer>`;
   }
+  function refreshHeaderUser(user) {
+    const name = document.getElementById("headerName");
+    const badge = document.getElementById("headerInitials");
+    if (name) name.textContent = fullName(user);
+    if (badge) badge.textContent = initials(user);
+  }
   async function initProtectedLayout() {
     if (!auth.requireUser()) return false;
     renderHeader();
@@ -86,6 +92,7 @@
     formatDate,
     renderHeader,
     renderFooter,
+    refreshHeaderUser,
     initProtectedLayout,
   };
 })();
