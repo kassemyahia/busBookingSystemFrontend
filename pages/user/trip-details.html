@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>BusBooking | Trip details</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../../assets/css/styles.css" />
+  </head>
+
+  <body class="bg-slate-50 text-slate-900">
+    <div id="appHeader"></div>
+
+    <main
+      class="mx-auto min-h-[calc(100vh-8rem)] max-w-6xl px-5 py-10 sm:px-6 lg:px-8"
+    >
+      <a
+        href="./trips.html"
+        class="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950"
+      >
+        ← Back to trips
+      </a>
+
+      <div id="tripAlert" class="mb-6 hidden"></div>
+
+      <section id="tripSummary" class="mb-8">
+        <div class="py-20 text-center text-slate-400">Loading trip...</div>
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div
+          class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        >
+          <div>
+            <p class="text-sm font-semibold text-teal-700">Seat selection</p>
+
+            <h2 class="mt-1 text-2xl font-bold">Choose your seat</h2>
+
+            <p class="mt-2 text-sm text-slate-500">
+              Your seat is not reserved until you continue to booking.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-4 text-xs text-slate-500">
+            <span class="flex items-center gap-2">
+              <span class="h-3 w-3 rounded bg-teal-50 ring-1 ring-cyan-300"></span>
+
+              Available
+            </span>
+
+            <span class="flex items-center gap-2">
+              <span
+                class="h-3 w-3 rounded bg-amber-100 ring-1 ring-amber-300"
+              ></span>
+
+              Reserved
+            </span>
+
+            <span class="flex items-center gap-2">
+              <span
+                class="h-3 w-3 rounded bg-slate-200 ring-1 ring-slate-300"
+              ></span>
+
+              Confirmed
+            </span>
+          </div>
+        </div>
+
+        <div class="bus-cabin">
+          <div id="seatLoading" class="py-12 text-center text-sm text-slate-400">Preparing seat map...</div>
+          <div id="seatsGrid" class="grid grid-cols-4 gap-x-8 gap-y-3 sm:gap-x-14"></div>
+        </div>
+
+        <div id="seatSelectionFooter" class="sticky bottom-4 mt-6 hidden items-center justify-between gap-4 rounded-2xl border border-teal-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:p-5">
+          <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Selected seat</p><p id="selectedSeatLabel" class="mt-1 text-xl font-extrabold text-teal-700">—</p></div>
+          <button id="continueWithSeat" type="button" class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50">Continue to booking</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="appFooter"></div>
+
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/auth.js"></script>
+    <script src="../../assets/js/layouts/user-layout.js"></script>
+    <script src="../../assets/js/user/trip-details.js"></script>
+  </body>
+</html>

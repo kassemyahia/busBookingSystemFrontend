@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>User Discount Tickets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../assets/css/styles.css" />
+  </head>
+  <body class="bg-slate-50">
+    <div id="staffShell"></div>
+    <main class="p-5 lg:ml-64 lg:p-8">
+      <div id="pageAlert" class="hidden"></div>
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold">User Discount Tickets</h1>
+        <p class="text-slate-500">
+          Enter the passenger User ID to assign a discount or review issued
+          tickets.
+        </p>
+      </div>
+      <form id="lookupForm" class="mb-5 flex max-w-lg gap-3">
+        <input
+          name="userId"
+          type="number"
+          min="1"
+          required
+          placeholder="User ID"
+          class="min-w-0 flex-1 rounded-xl border px-4 py-3"
+        /><button class="rounded-xl border bg-white px-4">View tickets</button
+        ><button
+          id="assignButton"
+          type="button"
+          class="rounded-xl bg-teal-600 px-4 font-semibold"
+        >
+          Assign
+        </button>
+      </form>
+      <div id="loadingState" class="hidden">Loading…</div>
+      <div id="tableRoot"></div>
+    </main>
+    <div id="modalRoot"></div>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/auth.js"></script>
+    <script src="../../assets/js/admin/admin-common.js"></script>
+    <script src="../../assets/js/layouts/staff-layout.js"></script>
+    <script src="../../assets/js/admin/admin-user-discount-tickets.js"></script>
+  </body>
+</html>

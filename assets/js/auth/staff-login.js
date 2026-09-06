@@ -1,0 +1,37 @@
+(() => {
+  const form = document.getElementById("loginForm"),
+    alert = document.getElementById("alert"),
+    button = document.getElementById("loginButton");
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    alert.classList.add("hidden");
+    const phone = form.phone.value.trim();
+    if (!/^09\d{8}$/.test(phone)) {
+      alert.textContent =
+        "Phone must start with 09 and contain exactly 10 digits.";
+      alert.classList.remove("hidden");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "Signing in…";
+    try {
+      await auth.employeeLogin(
+        phone,
+        form.password.value,
+        form.remember.checked,
+      );
+      const role = auth.getRole();
+      if (role === "Manager" || role === "OfficeEmployee")
+        location.href = "../admin/admin-dashboard.html";
+      else {
+        auth.clearSession();
+        throw new Error("Driver accounts must use the driver login.");
+      }
+    } catch (err) {
+      alert.textContent = err.message;
+      alert.classList.remove("hidden");
+      button.disabled = false;
+      button.textContent = "Sign in";
+    }
+  };
+})();

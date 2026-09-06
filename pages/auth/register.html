@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>BusBooking | Register</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../../assets/css/styles.css" />
+  </head>
+
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <main class="min-h-screen lg:grid lg:grid-cols-[0.85fr_1.15fr]">
+      <section
+        class="travel-hero relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col lg:justify-between"
+      >
+        <div class="transport-grid absolute inset-0 opacity-40"></div>
+
+        <a href="./login.html" class="relative z-10 flex items-center gap-3">
+          <span
+            class="grid h-11 w-11 place-items-center rounded-xl bg-white font-bold text-slate-950"
+          >
+            B
+          </span>
+
+          <span class="text-xl font-bold"> BusBooking </span>
+        </a>
+
+        <div class="relative z-10 max-w-md">
+          <p
+            class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-teal-300"
+          >
+            Get on board
+          </p>
+
+          <h1 class="text-5xl font-bold leading-tight">
+            Your next trip is only a few clicks away.
+          </h1>
+
+          <p class="mt-6 text-lg leading-8 text-slate-300">
+            Create an account to search trips, reserve seats, pay for bookings,
+            and manage your tickets.
+          </p>
+        </div>
+
+        <p class="relative z-10 text-sm text-slate-500">BusBooking</p>
+      </section>
+
+      <section class="flex items-center justify-center px-5 py-12 sm:px-8">
+        <div class="w-full max-w-2xl">
+          <div class="mb-8">
+            <a
+              href="./login.html"
+              class="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 lg:hidden"
+            >
+              ← Sign in
+            </a>
+
+            <p class="mb-2 text-sm font-semibold text-teal-700">
+              Create account
+            </p>
+
+            <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+              Start booking your trips
+            </h2>
+
+            <p class="mt-3 text-sm text-slate-500">All fields are required.</p>
+          </div>
+
+          <div id="registerAlert" class="mb-6 hidden"></div>
+
+          <form id="registerForm" class="grid gap-5 sm:grid-cols-2" novalidate>
+            <div>
+              <label class="mb-2 block text-sm font-semibold">
+                First name
+              </label>
+
+              <input
+                id="firstName"
+                type="text"
+                autocomplete="given-name"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                placeholder="John"
+              />
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold">
+                Last name
+              </label>
+
+              <input
+                id="lastName"
+                type="text"
+                autocomplete="family-name"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                placeholder="Smith"
+              />
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold"> Phone </label>
+
+              <input
+                id="registerPhone"
+                type="tel"
+                maxlength="10"
+                inputmode="numeric"
+                autocomplete="tel"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                placeholder="09XXXXXXXX"
+              />
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold">
+                National number
+              </label>
+
+              <input
+                id="nationalNumber"
+                type="text"
+                inputmode="numeric"
+                maxlength="11"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                placeholder="11 digits"
+              />
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold"> Password </label>
+
+              <input
+                id="registerPassword"
+                type="password"
+                autocomplete="new-password"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                placeholder="Minimum 8 characters"
+              />
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold">
+                Confirm password
+              </label>
+
+              <input
+                id="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-950 focus:ring-4 focus:ring-slate-900/5"
+                placeholder="Repeat password"
+              />
+            </div>
+
+            <label
+              class="flex items-center gap-3 text-sm text-slate-600 sm:col-span-2"
+            >
+              <input
+                id="registerRememberMe"
+                type="checkbox"
+                checked
+                class="h-4 w-4 rounded border-slate-300"
+              />
+
+              Keep me signed in
+            </label>
+
+            <button
+              id="registerButton"
+              type="submit"
+              class="rounded-xl bg-slate-950 px-5 py-3.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 sm:col-span-2"
+            >
+              Create account
+            </button>
+          </form>
+
+          <p class="mt-8 text-center text-sm text-slate-500">
+            Already have an account?
+
+            <a
+              href="./login.html"
+              class="font-semibold text-slate-950 hover:underline"
+            >
+              Sign in
+            </a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/auth.js"></script>
+    <script src="../../assets/js/auth/register.js"></script>
+  </body>
+</html>
