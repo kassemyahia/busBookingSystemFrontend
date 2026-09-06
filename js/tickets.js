@@ -11,6 +11,39 @@
 
   const loading = document.getElementById("ticketsLoading");
 
+  const cancellationConfirmation = document.getElementById(
+    "cancellationConfirmation",
+  );
+
+  const cancellationConfirmationMessage = document.getElementById(
+    "cancellationConfirmationMessage",
+  );
+
+  const proceedCancellationButton = document.getElementById(
+    "proceedCancellation",
+  );
+
+  const keepBookingButton = document.getElementById("keepBooking");
+
+  let bookingAwaitingCancellation = null;
+
+  function hideCancellationConfirmation() {
+    bookingAwaitingCancellation = null;
+    cancellationConfirmation.classList.add("hidden");
+    proceedCancellationButton.disabled = false;
+    proceedCancellationButton.textContent = "Proceed with cancellation";
+  }
+
+  function showCancellationConfirmation(bookingId, message) {
+    bookingAwaitingCancellation = bookingId;
+    cancellationConfirmationMessage.textContent = message;
+    cancellationConfirmation.classList.remove("hidden");
+    cancellationConfirmation.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+
   function bookingStatusName(status) {
     const number = Number(status);
 
@@ -363,14 +396,67 @@
         },
       );
 
+      const responseStatus = window.ui.pick(
+        response,
+        "bookingStatus",
+        "BookingStatus",
+      );
+
+      const responseMessage =
+        window.ui.pick(response, "message", "Message") ||
+        "Booking cancelled.";
+
+      if (isConfirmed(responseStatus)) {
+        showCancellationConfirmation(bookingId, responseMessage);
+
+        return;
+      }
+
       window.ui.showAlert(
         "ticketsAlert",
         "success",
-        window.ui.pick(response, "message", "Message") || "Booking cancelled.",
+        responseMessage,
+      );
+
+      hideCancellationConfirmation();
+      await loadTickets();
+    } catch (error) {
+      window.ui.showAlert("ticketsAlert", "error", error.message);
+    }
+  }
+
+  async function confirmCancellation() {
+    if (!bookingAwaitingCancellation) {
+      return;
+    }
+
+    const bookingId = bookingAwaitingCancellation;
+
+    proceedCancellationButton.disabled = true;
+    proceedCancellationButton.textContent = "Cancelling...";
+
+    try {
+      const response = await window.api.request(
+        `/api/Booking/confirm-cancel-booking/${bookingId}`,
+        {
+          method: "POST",
+          auth: true,
+        },
+      );
+
+      hideCancellationConfirmation();
+
+      window.ui.showAlert(
+        "ticketsAlert",
+        "success",
+        window.ui.pick(response, "message", "Message") ||
+          "Booking cancelled successfully.",
       );
 
       await loadTickets();
     } catch (error) {
+      proceedCancellationButton.disabled = false;
+      proceedCancellationButton.textContent = "Proceed with cancellation";
       window.ui.showAlert("ticketsAlert", "error", error.message);
     }
   }
@@ -432,6 +518,10 @@
     normalTab.className =
       "rounded-lg px-4 py-2 text-sm font-semibold text-slate-500";
   });
+
+  proceedCancellationButton.addEventListener("click", confirmCancellation);
+
+  keepBookingButton.addEventListener("click", hideCancellationConfirmation);
 
   loadTickets();
 })();
