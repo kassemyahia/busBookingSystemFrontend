@@ -11,6 +11,63 @@
 
   const loading = document.getElementById("tripsLoading");
 
+  const startCitySelect = document.getElementById("startCity");
+
+  const endCitySelect = document.getElementById("endCity");
+
+  function getCityName(city) {
+    return window.ui.pick(city, "name", "Name");
+  }
+
+  function populateCitySelect(select, cities, placeholder) {
+    select.innerHTML = `
+      <option value="">${window.ui.escapeHtml(placeholder)}</option>
+      ${cities
+        .map((city) => {
+          const name = getCityName(city);
+
+          return `<option value="${window.ui.escapeHtml(name)}">${window.ui.escapeHtml(name)}</option>`;
+        })
+        .join("")}
+    `;
+
+    select.disabled = false;
+  }
+
+  async function loadCities() {
+    try {
+      const response = await window.api.request(
+        "/api/employee/city/all-cities",
+        {
+          method: "GET",
+          auth: true,
+        },
+      );
+
+      const cities = Array.isArray(response) ? response : [];
+
+      populateCitySelect(startCitySelect, cities, "Any departure city");
+      populateCitySelect(endCitySelect, cities, "Any destination city");
+
+      if (cities.length === 0) {
+        window.ui.showAlert(
+          "tripsAlert",
+          "warning",
+          "No cities are currently available for filtering.",
+        );
+      }
+    } catch (error) {
+      populateCitySelect(startCitySelect, [], "Cities unavailable");
+      populateCitySelect(endCitySelect, [], "Cities unavailable");
+
+      window.ui.showAlert(
+        "tripsAlert",
+        "warning",
+        `Trips are available, but city filters could not be loaded: ${error.message}`,
+      );
+    }
+  }
+
   function renderTrips(trips) {
     loading.classList.add("hidden");
 
@@ -167,9 +224,9 @@
       const params = new URLSearchParams();
 
       const values = {
-        startCity: document.getElementById("startCity").value.trim(),
+        startCity: startCitySelect.value,
 
-        endCity: document.getElementById("endCity").value.trim(),
+        endCity: endCitySelect.value,
 
         date: document.getElementById("tripDate").value,
 
@@ -179,6 +236,16 @@
 
         order: document.getElementById("sortOrder").value,
       };
+
+      if (values.startCity && values.startCity === values.endCity) {
+        window.ui.showAlert(
+          "tripsAlert",
+          "warning",
+          "Departure and destination cities must be different.",
+        );
+
+        return;
+      }
 
       Object.entries(values).forEach(([key, value]) => {
         if (value) {
@@ -196,5 +263,5 @@
     loadTrips();
   });
 
-  loadTrips();
+  await Promise.all([loadCities(), loadTrips()]);
 })();
