@@ -1,225 +1,65 @@
 (() => {
-  const ACCESS_TOKEN_KEY = "transport_access_token";
-
-  const REFRESH_TOKEN_KEY = "transport_refresh_token";
-
-  const USER_KEY = "transport_user";
-
-  const REMEMBER_KEY = "transport_remember_me";
-
-  function pick(object, camelCase, pascalCase) {
-    return object?.[camelCase] ?? object?.[pascalCase] ?? null;
+  const KEYS = { access: "transport_access_token", refresh: "transport_refresh_token", entity: "transport_user", type: "transport_account_type", role: "transport_role", remember: "transport_remember_me" };
+  const pick = (o, ...names) => names.map((n) => o?.[n]).find((v) => v !== undefined && v !== null) ?? null;
+  const clear = (s) => Object.values(KEYS).filter((k) => k !== KEYS.remember).forEach((k) => s.removeItem(k));
+  function storage() {
+    if (localStorage.getItem(KEYS.access) || localStorage.getItem(KEYS.refresh)) return localStorage;
+    if (sessionStorage.getItem(KEYS.access) || sessionStorage.getItem(KEYS.refresh)) return sessionStorage;
+    return localStorage.getItem(KEYS.remember) === "true" ? localStorage : sessionStorage;
   }
-
-  function clearStorage(storage) {
-    storage.removeItem(ACCESS_TOKEN_KEY);
-
-    storage.removeItem(REFRESH_TOKEN_KEY);
-
-    storage.removeItem(USER_KEY);
+  function saveSession(response, remember = false, requestedType = "User") {
+    const access = pick(response, "accessToken", "AccessToken");
+    const refresh = pick(response, "refreshToken", "RefreshToken");
+    const entity = pick(response, "user", "User", "employee", "Employee", "driver", "Driver");
+    if (!access) throw new Error("The API did not return an access token.");
+    clear(localStorage); clear(sessionStorage);
+    const target = remember ? localStorage : sessionStorage;
+    const type = requestedType === "User" ? "User" : requestedType === "Driver" ? "Driver" : "Employee";
+    const role = type === "Driver" ? "Driver" : pick(entity, "role", "Role") || (type === "User" ? "User" : null);
+    target.setItem(KEYS.access, access);
+    if (refresh) target.setItem(KEYS.refresh, refresh);
+    if (entity) target.setItem(KEYS.entity, JSON.stringify(entity));
+    target.setItem(KEYS.type, type);
+    if (role) target.setItem(KEYS.role, String(role));
+    localStorage.setItem(KEYS.remember, String(remember));
   }
-
-  function getSessionStorage() {
-    if (
-      localStorage.getItem(ACCESS_TOKEN_KEY) ||
-      localStorage.getItem(REFRESH_TOKEN_KEY)
-    ) {
-      return localStorage;
-    }
-
-    if (
-      sessionStorage.getItem(ACCESS_TOKEN_KEY) ||
-      sessionStorage.getItem(REFRESH_TOKEN_KEY)
-    ) {
-      return sessionStorage;
-    }
-
-    const remembered = localStorage.getItem(REMEMBER_KEY) === "true";
-
-    return remembered ? localStorage : sessionStorage;
+  const getAccessToken = () => storage().getItem(KEYS.access);
+  const getRefreshToken = () => storage().getItem(KEYS.refresh);
+  const getAccountType = () => storage().getItem(KEYS.type) || (getAccessToken() ? "User" : null);
+  const getRole = () => storage().getItem(KEYS.role) || (getAccountType() === "User" ? "User" : null);
+  function getUser() { try { return JSON.parse(storage().getItem(KEYS.entity)); } catch { return null; } }
+  function updateStoredUser(value) { if (value) storage().setItem(KEYS.entity, JSON.stringify(value)); }
+  function clearSession() { clear(localStorage); clear(sessionStorage); localStorage.removeItem(KEYS.remember); }
+  async function performLogin(path, phone, password, remember, type) {
+    const response = await api.request(path, { method: "POST", body: JSON.stringify({ Phone: phone, Password: password }) });
+    saveSession(response, remember, type); return response;
   }
-
-  function saveSession(response, rememberMe = false) {
-    const accessToken = pick(response, "accessToken", "AccessToken");
-
-    const refreshToken = pick(response, "refreshToken", "RefreshToken");
-
-    const user = pick(response, "user", "User");
-
-    if (!accessToken) {
-      throw new Error("The API did not return an access token.");
-    }
-
-    clearStorage(localStorage);
-
-    clearStorage(sessionStorage);
-
-    const storage = rememberMe ? localStorage : sessionStorage;
-
-    storage.setItem(ACCESS_TOKEN_KEY, accessToken);
-
-    if (refreshToken) {
-      storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    }
-
-    if (user) {
-      storage.setItem(USER_KEY, JSON.stringify(user));
-    }
-
-    localStorage.setItem(REMEMBER_KEY, rememberMe ? "true" : "false");
-  }
-
-  function getAccessToken() {
-    return getSessionStorage().getItem(ACCESS_TOKEN_KEY);
-  }
-
-  function getRefreshToken() {
-    return getSessionStorage().getItem(REFRESH_TOKEN_KEY);
-  }
-
-  function getUser() {
-    const raw = getSessionStorage().getItem(USER_KEY);
-
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-
-  function updateStoredUser(user) {
-    if (!user) {
-      return;
-    }
-
-    getSessionStorage().setItem(USER_KEY, JSON.stringify(user));
-  }
-
-  function clearSession() {
-    clearStorage(localStorage);
-
-    clearStorage(sessionStorage);
-
-    localStorage.removeItem(REMEMBER_KEY);
-  }
-
-  async function login(phone, password, rememberMe = false) {
-    const response = await window.api.request("/api/Auth/login", {
-      method: "POST",
-
-      body: JSON.stringify({
-        Phone: phone,
-        Password: password,
-      }),
-    });
-
-    saveSession(response, rememberMe);
-
-    return response;
-  }
-
-  async function register(data, rememberMe = false) {
-    const response = await window.api.request("/api/Auth/register", {
-      method: "POST",
-
-      body: JSON.stringify(data),
-    });
-
-    saveSession(response, rememberMe);
-
-    return response;
-  }
-
+  const login = (p, w, r) => performLogin("/api/Auth/login", p, w, r, "User");
+  const employeeLogin = (p, w, r) => performLogin("/api/Auth/employee/login", p, w, r, "Employee");
+  const driverLogin = (p, w, r) => performLogin("/api/Auth/driver/login", p, w, r, "Driver");
+  async function register(data, remember = false) { const response = await api.request("/api/Auth/register", { method: "POST", body: JSON.stringify(data) }); saveSession(response, remember, "User"); return response; }
   async function refreshSession() {
-    const storage = getSessionStorage();
-
-    const refreshToken = storage.getItem(REFRESH_TOKEN_KEY);
-
-    if (!refreshToken) {
-      return false;
-    }
-
+    const target = storage(), refresh = target.getItem(KEYS.refresh);
+    if (!refresh) return false;
     try {
-      const response = await window.api.request("/api/Auth/refresh-token", {
-        method: "POST",
-
-        skipRefresh: true,
-
-        body: JSON.stringify({
-          RefreshToken: refreshToken,
-        }),
-      });
-
-      const accessToken = pick(response, "accessToken", "AccessToken");
-
-      const newRefreshToken = pick(response, "refreshToken", "RefreshToken");
-
-      if (!accessToken) {
-        throw new Error("Refresh failed.");
-      }
-
-      storage.setItem(ACCESS_TOKEN_KEY, accessToken);
-
-      if (newRefreshToken) {
-        storage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
-      }
-
-      return true;
-    } catch {
-      clearSession();
-
-      return false;
-    }
+      const data = await api.request("/api/Auth/refresh-token", { method: "POST", skipRefresh: true, body: JSON.stringify({ RefreshToken: refresh }) });
+      const access = pick(data, "accessToken", "AccessToken"); if (!access) throw new Error("Refresh failed.");
+      target.setItem(KEYS.access, access); const next = pick(data, "refreshToken", "RefreshToken"); if (next) target.setItem(KEYS.refresh, next); return true;
+    } catch { const type = getAccountType(); clearSession(); window.location.replace(type === "Driver" ? "./driver-login.html" : type === "Employee" ? "./staff-login.html" : "./login.html"); return false; }
   }
-
-  async function me() {
-    return window.api.request("/api/Auth/me", {
-      method: "GET",
-      auth: true,
-    });
-  }
-
+  const me = () => api.request("/api/Auth/me", { auth: true });
+  const employeeMe = () => api.request("/api/Auth/employee/me", { auth: true });
+  const driverMe = () => api.request("/api/Auth/driver/me", { auth: true });
   async function logout() {
-    try {
-      await window.api.request("/api/Auth/logout", {
-        method: "POST",
-        auth: true,
-        skipRefresh: true,
-      });
-    } catch (error) {
-      console.warn("Server logout failed:", error);
-    } finally {
-      clearSession();
-
-      window.location.href = "./login.html";
-    }
+    const type = getAccountType(); const path = type === "Driver" ? "/api/Auth/driver/logout" : type === "Employee" ? "/api/Auth/employee/logout" : "/api/Auth/logout";
+    try { await api.request(path, { method: "POST", auth: true, skipRefresh: true }); } catch (e) { console.warn("Server logout failed", e); }
+    clearSession(); window.location.href = type === "Driver" ? "./driver-login.html" : type === "Employee" ? "./staff-login.html" : "./login.html";
   }
-
-  function requireAuth() {
-    if (!getAccessToken()) {
-      window.location.replace("./login.html");
-
-      return false;
-    }
-
-    return true;
-  }
-
-  window.auth = {
-    login,
-    register,
-    refreshSession,
-    me,
-    logout,
-    requireAuth,
-    getAccessToken,
-    getRefreshToken,
-    getUser,
-    updateStoredUser,
-    clearSession,
-  };
+  function guard(valid, target) { if (!getAccessToken() || !valid) { window.location.replace(target); return false; } return true; }
+  const requireUser = () => guard(getAccountType() === "User", "./login.html");
+  const requireEmployee = () => guard(getAccountType() === "Employee" && ["Manager", "OfficeEmployee"].includes(getRole()), "./staff-login.html");
+  const requireManager = () => guard(getAccountType() === "Employee" && getRole() === "Manager", "./admin-dashboard.html");
+  const requireOfficeEmployee = () => guard(getAccountType() === "Employee" && getRole() === "OfficeEmployee", "./staff-login.html");
+  const requireDriver = () => guard(getAccountType() === "Driver" && getRole() === "Driver", "./driver-login.html");
+  window.auth = { login, employeeLogin, driverLogin, register, refreshSession, me, employeeMe, driverMe, logout, requireAuth: requireUser, requireUser, requireEmployee, requireManager, requireOfficeEmployee, requireDriver, getAccessToken, getRefreshToken, getAccountType, getRole, getUser, updateStoredUser, clearSession };
 })();

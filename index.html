@@ -14,7 +14,15 @@
         localStorage.getItem("transport_access_token") ||
         sessionStorage.getItem("transport_access_token");
 
-      if (hasToken) {
+      const storage = localStorage.getItem("transport_access_token") ? localStorage : sessionStorage;
+      const accountType = storage.getItem("transport_account_type");
+      const role = storage.getItem("transport_role");
+
+      if (hasToken && accountType === "Driver") {
+        window.location.replace("./pages/driver-dashboard.html");
+      } else if (hasToken && accountType === "Employee" && (role === "Manager" || role === "OfficeEmployee")) {
+        window.location.replace("./pages/admin-dashboard.html");
+      } else if (hasToken) {
         window.location.replace("./pages/trips.html");
       } else {
         window.location.replace("./pages/login.html");

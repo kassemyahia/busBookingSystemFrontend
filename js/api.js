@@ -24,10 +24,13 @@
       return "Your session is not authorized.";
     }
 
+    if (status === 403) return "You do not have permission to perform this action.";
     if (status === 404) {
       return "The requested resource was not found.";
     }
 
+    if (status === 409) return "The request conflicts with existing data.";
+    if (status >= 500) return "The API encountered an internal error.";
     return "Something went wrong.";
   }
 
@@ -89,7 +92,7 @@
       response = await makeRequest();
     } catch (error) {
       const networkError = new Error(
-        "Cannot connect to the API. Make sure the backend is running, HTTPS is trusted, and CORS is enabled.",
+        "Cannot connect to the API. The service may be unavailable.",
       );
 
       networkError.isNetworkError = true;
@@ -129,5 +132,7 @@
 
   window.api = {
     request,
+    asArray(value) { return Array.isArray(value) ? value : []; },
+    message(value, fallback = "") { return getErrorMessage(value, 200) === "Something went wrong." ? fallback : getErrorMessage(value, 200); },
   };
 })();
