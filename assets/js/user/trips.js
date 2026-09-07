@@ -5,15 +5,11 @@
   const loading = document.getElementById("tripsLoading");
   const start = document.getElementById("startCity");
   const end = document.getElementById("endCity");
+  let defaultSortValue = "date";
 
   async function loadSearchOptions() {
-    const fill = (select, options, fallbackLabel = "") => {
-      const first = fallbackLabel
-        ? `<option value="">${window.ui.escapeHtml(fallbackLabel)}</option>`
-        : "";
-      select.innerHTML =
-        first +
-        options
+    const fill = (select, options) => {
+      select.innerHTML = options
           .map((option) => {
             const key = ui.pick(option, "key", "Key");
             const label = ui.pick(option, "label", "Label");
@@ -27,10 +23,74 @@
         api.request("/api/SortBy/options"),
         api.request("/api/SortOptions/order"),
       ]);
-      fill(document.getElementById("sortBy"), api.asArray(sortOptions), "Recommended");
+      const validSortOptions = api.asArray(sortOptions).filter((option) => {
+        const key = ui.pick(option, "key", "Key");
+        const label = ui.pick(option, "label", "Label");
+        return ![key, label].some(
+          (value) =>
+            String(value || "").trim().toLowerCase() === "recommended",
+        );
+      });
+      if (
+        !validSortOptions.some(
+          (option) =>
+            String(ui.pick(option, "key", "Key") || "").toLowerCase() ===
+            "date",
+        )
+      ) {
+        validSortOptions.unshift({ key: "date", label: "Date" });
+      }
+      const sortSelect = document.getElementById("sortBy");
+      fill(sortSelect, validSortOptions);
+      const dateOption = Array.from(sortSelect.options).find(
+        (option) => option.value.toLowerCase() === "date",
+      );
+      defaultSortValue = dateOption?.value || "date";
+      sortSelect.value = defaultSortValue;
       fill(document.getElementById("sortOrder"), api.asArray(orderOptions));
     } catch {
       // The HTML options remain as a compatible fallback if metadata is unavailable.
+    }
+  }
+
+  async function loadBusTypes() {
+    const select = document.getElementById("busType");
+    try {
+      const response = await api.request(
+        "/api/employee/TypeBus/all-bus-types",
+        { auth: true },
+      );
+      const seen = new Set();
+      const names = api
+        .asArray(response)
+        .map((type) =>
+          typeof type === "string"
+            ? type
+            : ui.pick(
+                type,
+                "name",
+                "Name",
+                "type",
+                "Type",
+                "busTypeName",
+                "BusTypeName",
+              ),
+        )
+        .map((name) => String(name || "").trim())
+        .filter((name) => {
+          const key = name.toLowerCase();
+          if (!name || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      select.innerHTML = `<option value="">Any bus type</option>${names
+        .map(
+          (name) =>
+            `<option value="${ui.escapeHtml(name)}">${ui.escapeHtml(name)}</option>`,
+        )
+        .join("")}`;
+    } catch {
+      // Keep the usable "Any bus type" fallback when metadata is unavailable.
     }
   }
 
@@ -127,8 +187,8 @@
       startCity: start.value,
       endCity: end.value,
       date: document.getElementById("tripDate").value,
-      busType: document.getElementById("busType").value.trim(),
-      sortBy: document.getElementById("sortBy").value,
+      busType: document.getElementById("busType").value,
+      sortBy: document.getElementById("sortBy").value || defaultSortValue,
       order: document.getElementById("sortOrder").value,
     };
     if (values.startCity && values.startCity === values.endCity) {
@@ -145,7 +205,8 @@
   });
   document.getElementById("resetSearch").onclick = () => {
     form.reset();
-    loadTrips();
+    document.getElementById("sortBy").value = defaultSortValue;
+    form.requestSubmit();
   };
   document.getElementById("swapCities").onclick = () => {
     const value = start.value;
@@ -154,5 +215,10 @@
   };
   document.getElementById("mobileFilters").onclick = () =>
     document.getElementById("advancedFilters").classList.toggle("hidden");
-  await Promise.all([loadCities(), loadSearchOptions(), loadTrips()]);
+  await Promise.all([
+    loadCities(),
+    loadSearchOptions(),
+    loadBusTypes(),
+  ]);
+  form.requestSubmit();
 })();

@@ -91,12 +91,12 @@
               ><span
                 class="mb-2 block text-xs font-bold uppercase text-slate-500"
                 >Bus type</span
-              ><input
+              ><select
                 id="busType"
-                type="text"
-                placeholder="Any bus type"
-                class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-            /></label>
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+              >
+                <option value="">Any bus type</option>
+              </select></label>
             <label
               ><span
                 class="mb-2 block text-xs font-bold uppercase text-slate-500"
@@ -105,8 +105,7 @@
                 id="sortBy"
                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
               >
-                <option value="">Recommended</option>
-                <option value="date">Date</option>
+                <option value="date" selected>Date</option>
                 <option value="startcity">Origin</option>
                 <option value="endcity">Destination</option>
                 <option value="bustype">Bus type</option>

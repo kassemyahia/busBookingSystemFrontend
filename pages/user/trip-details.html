@@ -41,7 +41,7 @@
             <h2 class="mt-1 text-2xl font-bold">Choose your seat</h2>
 
             <p class="mt-2 text-sm text-slate-500">
-              Your seat is not reserved until you continue to booking.
+              Selecting a seat only highlights it. Choose an action below to create a booking.
             </p>
           </div>
 
@@ -75,9 +75,12 @@
           <div id="seatsGrid" class="grid grid-cols-4 gap-x-8 gap-y-3 sm:gap-x-14"></div>
         </div>
 
-        <div id="seatSelectionFooter" class="sticky bottom-4 mt-6 hidden items-center justify-between gap-4 rounded-2xl border border-teal-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:p-5">
-          <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Selected seat</p><p id="selectedSeatLabel" class="mt-1 text-xl font-extrabold text-teal-700">—</p></div>
-          <button id="continueWithSeat" type="button" class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50">Continue to booking</button>
+        <div id="seatSelectionFooter" class="sticky bottom-4 mt-6 hidden gap-4 rounded-2xl border border-teal-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:p-5 lg:items-center lg:justify-between">
+          <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Selected seat</p><p id="selectedSeatLabel" class="mt-1 text-xl font-extrabold text-teal-700">—</p><p id="temporaryBookingStatus" class="mt-2 hidden text-sm font-semibold text-emerald-700"></p></div>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <button id="temporaryBookingButton" type="button" class="rounded-xl border border-teal-600 bg-white px-6 py-3 text-sm font-bold text-teal-700 hover:bg-teal-50 disabled:opacity-50">Temporarily book for 2 hours</button>
+            <button id="continueToPayment" type="button" class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50">Continue to payment</button>
+          </div>
         </div>
       </section>
     </main>

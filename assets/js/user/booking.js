@@ -21,6 +21,10 @@
 
   const reserveButton = document.getElementById("reserveButton");
 
+  const paymentButton = document.getElementById("paymentButton");
+
+  let requestInProgress = false;
+
   document.getElementById("changeSeatLink").href =
     `./trip-details.html?id=${encodeURIComponent(tripId)}`;
 
@@ -132,13 +136,19 @@
     "click",
 
     async () => {
+      if (requestInProgress || reserveButton.dataset.complete) return;
+
+      requestInProgress = true;
+
       reserveButton.disabled = true;
+
+      paymentButton.disabled = true;
 
       reserveButton.textContent = "Reserving...";
 
       try {
         const response = await window.api.request(
-          `/api/Booking/temporary-booking/${bookingId}`,
+          `/api/Booking/temporary-booking/${encodeURIComponent(bookingId)}`,
           {
             method: "POST",
             auth: true,
@@ -162,16 +172,47 @@
           }),
         );
 
-        window.location.href = `./payment.html?bookingId=${encodeURIComponent(bookingId)}`;
+        reserveButton.dataset.complete = "true";
+
+        reserveButton.textContent = "Seat held for 2 hours";
+
+        const notice = document.getElementById("bookingNotice");
+
+        notice.className =
+          "mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5";
+
+        document.getElementById("bookingNoticeTitle").className =
+          "font-semibold text-emerald-900";
+
+        document.getElementById("bookingNoticeTitle").textContent =
+          "Seat temporarily reserved";
+
+        document.getElementById("bookingNoticeText").className =
+          "mt-1 text-sm leading-6 text-emerald-700";
+
+        document.getElementById("bookingNoticeText").textContent = expiration
+          ? `Your seat is held for two hours, until ${window.ui.formatDate(expiration)}. Continue to payment when ready.`
+          : "Your seat is held for two hours. Continue to payment when ready.";
       } catch (error) {
         window.ui.showAlert("bookingAlert", "error", error.message);
+      } finally {
+        requestInProgress = false;
 
-        reserveButton.disabled = false;
+        reserveButton.disabled = Boolean(reserveButton.dataset.complete);
 
-        reserveButton.textContent = "Reserve seat & continue";
+        paymentButton.disabled = false;
+
+        if (!reserveButton.dataset.complete) {
+          reserveButton.textContent = "Temporarily book for 2 hours";
+        }
       }
     },
   );
+
+  paymentButton.addEventListener("click", () => {
+    if (requestInProgress) return;
+    window.location.href = `./payment.html?bookingId=${encodeURIComponent(bookingId)}`;
+  });
 
   loadBooking();
 })();
