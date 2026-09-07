@@ -80,8 +80,8 @@
           'required min="0" step="0.01"',
         ) +
         admin.select("Role", "Role", [
-          { value: "OfficeEmployee", label: "Office Employee" },
-          { value: "Driver", label: "Driver" },
+          { value: 2, label: "Office Employee" },
+          { value: 1, label: "Driver" },
         ]) +
         admin.input(
           "LicenseNumber",
@@ -91,9 +91,12 @@
           "",
         ),
       async (f) => {
+        const body = Object.fromEntries(f);
+        body.Salary = Number(body.Salary);
+        body.Role = Number(body.Role);
         await admin.request("/api/all-op-on-employee-table/add", {
           method: "POST",
-          body: JSON.stringify(Object.fromEntries(f)),
+          body: JSON.stringify(body),
         });
         await load();
       },
@@ -130,9 +133,11 @@
           'required min="0" step="0.01"',
         ),
       async (f) => {
+        const body = Object.fromEntries(f);
+        body.Salary = Number(body.Salary);
         await admin.request(`/api/all-op-on-employee-table/update/${id}`, {
           method: "PATCH",
-          body: JSON.stringify(Object.fromEntries(f)),
+          body: JSON.stringify(body),
         });
         await load();
       },

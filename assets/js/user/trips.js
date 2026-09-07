@@ -6,6 +6,34 @@
   const start = document.getElementById("startCity");
   const end = document.getElementById("endCity");
 
+  async function loadSearchOptions() {
+    const fill = (select, options, fallbackLabel = "") => {
+      const first = fallbackLabel
+        ? `<option value="">${window.ui.escapeHtml(fallbackLabel)}</option>`
+        : "";
+      select.innerHTML =
+        first +
+        options
+          .map((option) => {
+            const key = ui.pick(option, "key", "Key");
+            const label = ui.pick(option, "label", "Label");
+            return `<option value="${ui.escapeHtml(key)}">${ui.escapeHtml(label)}</option>`;
+          })
+          .join("");
+    };
+
+    try {
+      const [sortOptions, orderOptions] = await Promise.all([
+        api.request("/api/SortBy/options"),
+        api.request("/api/SortOptions/order"),
+      ]);
+      fill(document.getElementById("sortBy"), api.asArray(sortOptions), "Recommended");
+      fill(document.getElementById("sortOrder"), api.asArray(orderOptions));
+    } catch {
+      // The HTML options remain as a compatible fallback if metadata is unavailable.
+    }
+  }
+
   const cityName = (city) => window.ui.pick(city, "name", "Name");
   function fillCities(select, cities, label) {
     select.innerHTML = `<option value="">${label}</option>${cities.map((c) => `<option value="${window.ui.escapeHtml(cityName(c))}">${window.ui.escapeHtml(cityName(c))}</option>`).join("")}`;
@@ -126,5 +154,5 @@
   };
   document.getElementById("mobileFilters").onclick = () =>
     document.getElementById("advancedFilters").classList.toggle("hidden");
-  await Promise.all([loadCities(), loadTrips()]);
+  await Promise.all([loadCities(), loadSearchOptions(), loadTrips()]);
 })();

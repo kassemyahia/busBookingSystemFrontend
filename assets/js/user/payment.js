@@ -19,6 +19,55 @@
 
   const button = document.getElementById("payButton");
 
+  const paymentMethods = document.getElementById("paymentMethods");
+
+  const paymentCopy = {
+    1: {
+      title: "Card payment",
+      description: "Complete your reservation securely using a payment card.",
+    },
+    2: {
+      title: "Cash at office",
+      description: "Reserve online and complete payment at the booking office.",
+    },
+  };
+
+  async function loadPaymentMethods() {
+    try {
+      const options = window.api.asArray(
+        await window.api.request("/api/PaymentMethod/options", {
+          method: "GET",
+        }),
+      );
+
+      if (!options.length) return;
+
+      paymentMethods.innerHTML = options
+        .map((option, index) => {
+          const rawKey = window.ui.pick(option, "key", "Key");
+          const numericKey = Number(rawKey);
+          const key = Number.isFinite(numericKey)
+            ? numericKey
+            : { FakeCard: 1, CashAtOffice: 2 }[rawKey];
+          const apiLabel = window.ui.pick(option, "label", "Label");
+          const copy = paymentCopy[key] || {
+            title: apiLabel,
+            description: "Use this method to complete your booking.",
+          };
+
+          if (!key) return "";
+
+          return `<label class="flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 p-5 transition has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50">
+            <input type="radio" name="paymentMethod" value="${key}" ${index === 0 ? "checked" : ""} class="mt-1" />
+            <div><p class="font-semibold">${window.ui.escapeHtml(copy.title)}</p><p class="mt-1 text-sm leading-6 text-slate-500">${window.ui.escapeHtml(copy.description)}</p></div>
+          </label>`;
+        })
+        .join("");
+    } catch {
+      // Keep the server-compatible fallback options already rendered in HTML.
+    }
+  }
+
   function findValue(ticket, name) {
     return window.ui.pick(
       ticket,
@@ -233,5 +282,5 @@
     },
   );
 
-  loadBooking();
+  Promise.all([loadBooking(), loadPaymentMethods()]);
 })();

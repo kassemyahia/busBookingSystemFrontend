@@ -12,6 +12,14 @@
       return data.Message;
     }
 
+    if (data?.error) {
+      return data.error;
+    }
+
+    if (data?.Error) {
+      return data.Error;
+    }
+
     if (data?.errors) {
       const messages = Object.values(data.errors).flat().filter(Boolean);
 

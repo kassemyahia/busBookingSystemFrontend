@@ -217,7 +217,7 @@
 
       try {
         const response = await window.api.request(
-          "/api/UserChangePassword/change",
+          "/api/UserChangePassword/change-password",
           {
             method: "PUT",
             auth: true,
