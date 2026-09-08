@@ -1,3 +1,6 @@
+(() => {
+if (auth.redirectAuthenticated()) return;
+
 const loginForm = document.getElementById("loginForm");
 
 const phoneInput = document.getElementById("phone");
@@ -233,3 +236,4 @@ loginForm.addEventListener(
     }
   },
 );
+})();

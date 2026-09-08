@@ -19,10 +19,20 @@
   ];
   async function init() {
     if (!auth.requireEmployee()) return false;
+    let me;
+    try {
+      me = await auth.employeeMe();
+      auth.updateStoredUser(me);
+    } catch (error) {
+      const target = auth.loginUrl();
+      auth.clearSession();
+      window.location.replace(target);
+      return false;
+    }
     const page = location.pathname.split("/").pop();
     if (managerOnly.has(page) && !auth.requireManager()) return false;
     const role = auth.getRole(),
-      entity = auth.getUser() || {},
+      entity = me || auth.getUser() || {},
       name =
         admin.pick(entity, "fullName", "FullName") ||
         `${admin.pick(entity, "firstName", "FirstName")} ${admin.pick(entity, "lastName", "LastName")}`.trim() ||
@@ -40,12 +50,6 @@
     document.getElementById("staffMenu").onclick = () =>
       document.getElementById("staffSidebar").classList.toggle("hidden");
     document.getElementById("staffLogout").onclick = auth.logout;
-    try {
-      const me = await auth.employeeMe();
-      auth.updateStoredUser(me);
-    } catch (e) {
-      if (e.status === 401) return false;
-    }
     return true;
   }
   window.staffLayout = { init };

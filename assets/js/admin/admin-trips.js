@@ -60,7 +60,7 @@
   }
   async function details(id) {
     try {
-      const [d, seats, summary, passengers] = await Promise.all([
+      const [d, seats, summary, passengers] = await admin.safeAll([
         admin.request(`${base}/details/${id}`),
         admin.request(`${base}/${id}/seats-with-users`),
         admin.request(`${base}/${id}/seat-summary`),
@@ -76,10 +76,6 @@
       admin.table("passTable", passengers, [
         { label: "Seat", keys: ["seatNumber", "SeatNumber"] },
         { label: "Passenger", keys: ["fullName", "FullName"] },
-        {
-          label: "National number",
-          keys: ["nationalNumber", "NationalNumber"],
-        },
       ]);
     } catch (e) {
       admin.alert(e.message);
@@ -100,7 +96,7 @@
         ),
       typeId = admin.pick(type, "busTypeId", "BusTypeId", "id", "Id");
     if (!departure || !typeId) return;
-    const [drivers, buses] = await Promise.all([
+    const [drivers, buses] = await admin.safeAll([
       admin.request(
         `${base}/drivers/available?departureTime=${encodeURIComponent(departure)}`,
       ),
@@ -115,7 +111,7 @@
       "busId",
       "busType",
       (x) =>
-        `${admin.pick(x, "busType", "BusType")} · ${admin.pick(x, "capacity", "Capacity")} seats · bus #${admin.pick(x, "busId", "BusId")}`,
+        `${admin.pick(x, "busType", "BusType")} · ${admin.pick(x, "capacity", "Capacity")} seats · bus ${admin.pick(x, "busNumber", "BusNumber", "busId", "BusId")}`,
     );
   }
   function fill(el, data, id, name, formatter) {
@@ -246,11 +242,11 @@
       admin.alert(e.message);
     }
   }
-  options = await admin.request(`${base}/search-options`);
-  [routes, discounts] = await Promise.all([
+  [options, routes, discounts] = await admin.safeAll([
+    admin.request(`${base}/search-options`),
     admin.request(`${base}/route-prices`),
     admin.request(`${base}/discounts`),
-  ]);
+  ], {});
   routes = api.asArray(routes);
   discounts = api.asArray(discounts);
   const cities = api.asArray(admin.pick(options, "cities", "Cities"));

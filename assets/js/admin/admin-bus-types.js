@@ -4,7 +4,7 @@
   async function load() {
     admin.setLoading(true);
     try {
-      const [a, d] = await Promise.all([
+      const [a, d] = await admin.safeAll([
           admin.request(`${base}/all-bus-types`),
           admin.request(`${base}/all-deleted-bus-types`),
         ]),

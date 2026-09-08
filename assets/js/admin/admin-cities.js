@@ -5,7 +5,7 @@
     try {
       const now = new Date();
       const [cities, most, least, mostRoutes, leastRoutes, monthly] =
-        await Promise.all([
+        await admin.safeAll([
           admin.request("/api/employee/city/all-cities"),
           admin.request("/api/employee/city/cities/most-used-trips"),
           admin.request("/api/employee/city/cities/least-used-trips"),

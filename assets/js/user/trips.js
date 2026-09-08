@@ -6,6 +6,14 @@
   const start = document.getElementById("startCity");
   const end = document.getElementById("endCity");
   let defaultSortValue = "date";
+  let tripOptionsPromise;
+
+  function getTripOptions() {
+    tripOptionsPromise ??= api.request("/api/Trip/search-options", {
+      auth: true,
+    });
+    return tripOptionsPromise;
+  }
 
   async function loadSearchOptions() {
     const fill = (select, options) => {
@@ -20,8 +28,8 @@
 
     try {
       const [sortOptions, orderOptions] = await Promise.all([
-        api.request("/api/SortBy/options"),
-        api.request("/api/SortOptions/order"),
+        api.request("/api/SortBy/options", { auth: true }),
+        api.request("/api/SortOptions/order", { auth: true }),
       ]);
       const validSortOptions = api.asArray(sortOptions).filter((option) => {
         const key = ui.pick(option, "key", "Key");
@@ -56,13 +64,10 @@
   async function loadBusTypes() {
     const select = document.getElementById("busType");
     try {
-      const response = await api.request(
-        "/api/employee/TypeBus/all-bus-types",
-        { auth: true },
-      );
+      const response = await getTripOptions();
       const seen = new Set();
       const names = api
-        .asArray(response)
+        .asArray(ui.pick(response, "busTypes", "BusTypes"))
         .map((type) =>
           typeof type === "string"
             ? type
@@ -101,10 +106,8 @@
   }
   async function loadCities() {
     try {
-      const data = await api.request("/api/employee/city/all-cities", {
-        auth: true,
-      });
-      const cities = api.asArray(data);
+      const data = await getTripOptions();
+      const cities = api.asArray(ui.pick(data, "cities", "Cities"));
       fillCities(start, cities, "Any departure city");
       fillCities(end, cities, "Any destination city");
     } catch (error) {

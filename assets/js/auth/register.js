@@ -1,9 +1,5 @@
 (() => {
-  if (window.auth.getAccessToken()) {
-    window.location.replace("../user/trips.html");
-
-    return;
-  }
+  if (window.auth.redirectAuthenticated()) return;
 
   const form = document.getElementById("registerForm");
 
@@ -22,6 +18,9 @@
   const confirmPassword = document.getElementById("confirmPassword");
 
   const rememberMe = document.getElementById("registerRememberMe");
+
+  const passwordPattern =
+    /^(?!.*[\u0600-\u06FF])(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?])[A-Za-z0-9!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?]{8,49}$/;
 
   phone.addEventListener("input", () => {
     phone.value = phone.value.replace(/\D/g, "").slice(0, 10);
@@ -84,8 +83,11 @@
         return;
       }
 
-      if (pass.length < 8 || pass.length > 49) {
-        alert("error", "Password must contain between 8 and 49 characters.");
+      if (!passwordPattern.test(pass)) {
+        alert(
+          "error",
+          "Password must contain an English letter, number and symbol, and be 8–49 characters.",
+        );
 
         return;
       }

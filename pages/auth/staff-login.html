@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../../assets/css/styles.css" />
   </head>
-  <body class="min-h-screen bg-slate-950 text-slate-900">
+  <body data-login-type="Staff" class="min-h-screen bg-slate-950 text-slate-900">
     <main class="grid min-h-screen place-items-center p-5">
       <section class="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
         <a href="../../index.html" class="mb-8 block text-xl font-bold"
@@ -15,7 +15,7 @@
         >
         <h1 class="text-3xl font-bold">Staff sign in</h1>
         <p class="mt-2 text-sm text-slate-500">
-          For managers and office employees.
+          For office employees. Managers must use the manager sign-in.
         </p>
         <div
           id="alert"
@@ -40,13 +40,14 @@
             ><input name="remember" type="checkbox" /> Keep me signed in</label
           ><button
             id="loginButton"
-            class="w-full rounded-xl bg-teal-600 px-4 py-3 font-semibold"
+            class="w-full rounded-xl bg-teal-600 px-4 py-3 font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
           >
             Sign in
           </button>
         </form>
         <p class="mt-6 text-center text-sm">
-          <a class="text-teal-700" href="./driver-login.html">Driver login</a> ·
+          <a class="text-teal-700" href="./manager-login.html">Manager login</a> ·
+          <a href="./driver-login.html">Driver login</a> ·
           <a href="./login.html">Passenger login</a>
         </p>
       </section>
@@ -54,6 +55,6 @@
     <script src="../../assets/js/core/config.js"></script>
     <script src="../../assets/js/core/api.js"></script>
     <script src="../../assets/js/core/auth.js"></script>
-    <script src="../../assets/js/auth/staff-login.js"></script>
+    <script src="../../assets/js/auth/employee-login.js"></script>
   </body>
 </html>

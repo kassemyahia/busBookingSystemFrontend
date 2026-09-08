@@ -37,6 +37,7 @@
       const options = window.api.asArray(
         await window.api.request("/api/PaymentMethod/options", {
           method: "GET",
+          auth: true,
         }),
       );
 

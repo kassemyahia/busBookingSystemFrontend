@@ -5,7 +5,7 @@
   async function load() {
     admin.setLoading(true);
     try {
-      [types, statuses] = await Promise.all([
+      [types, statuses] = await admin.safeAll([
         admin.request("/api/employee/TypeBus/all-bus-types"),
         admin.request("/api/employee/buses/bus-statuses"),
       ]);
@@ -34,7 +34,7 @@
         .forEach((b) => (b.onclick = () => change(b.dataset.edit)));
       const now = new Date();
       const [most, least, road, monthly, deletionSuggestions] =
-        await Promise.all([
+        await admin.safeAll([
           admin.request("/api/employee/buses/buses/most-used-in-trips"),
           admin.request("/api/employee/buses/buses/least-used-in-trips"),
           admin.request("/api/employee/buses/buses/on-roads"),

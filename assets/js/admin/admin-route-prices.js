@@ -46,7 +46,7 @@
         "busTypeId",
       );
       const [a, d, s, m, l, suggestedDeletion, suggestedUpdates] =
-        await Promise.all([
+        await admin.safeAll([
           admin.request(
             busTypeId
               ? `${base}/all-route-prices-by-bus-type/${busTypeId}`
@@ -281,7 +281,7 @@
     };
   };
 
-  [cities, types] = await Promise.all([
+  [cities, types] = await admin.safeAll([
     admin.request("/api/employee/city/all-cities"),
     admin.request("/api/employee/TypeBus/all-bus-types"),
   ]);

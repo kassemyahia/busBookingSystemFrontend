@@ -16,7 +16,7 @@
       cities,
       tripsByRoute,
       tripsByBusType,
-    ] = await Promise.all([
+    ] = await admin.safeAll([
       admin.request("/api/employee/trips/trips/today"),
       admin.request("/api/employee/trips/trips/tomorrow"),
       admin.request("/api/employee/trips/trips/upcoming"),

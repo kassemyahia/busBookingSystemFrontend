@@ -70,6 +70,18 @@
   async function request(path, options) {
     return api.request(path, { auth: true, ...options });
   }
+  async function safeAll(requests, fallback = null) {
+    const results = await Promise.allSettled(requests);
+    const failure = results.find((result) => result.status === "rejected");
+    if (failure) {
+      alert(
+        `Some data could not be loaded: ${failure.reason?.message || "Request failed."}`,
+      );
+    }
+    return results.map((result) =>
+      result.status === "fulfilled" ? result.value : fallback,
+    );
+  }
   async function confirmAction(message, action) {
     if (!window.confirm(message)) return;
     try {
@@ -90,6 +102,7 @@
     input,
     select,
     request,
+    safeAll,
     confirmAction,
   };
 })();

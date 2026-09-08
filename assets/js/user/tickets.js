@@ -459,8 +459,7 @@
   async function loadTickets() {
     loading.classList.remove("hidden");
 
-    try {
-      const [tickets, discounts] = await Promise.all([
+    const [ticketsResult, discountsResult] = await Promise.allSettled([
         window.api.request("/api/UserTickets/my-tickets", {
           method: "GET",
           auth: true,
@@ -472,13 +471,32 @@
         }),
       ]);
 
-      renderTickets(Array.isArray(tickets) ? tickets : []);
+    loading.classList.add("hidden");
+    if (ticketsResult.status === "fulfilled") {
+      renderTickets(
+        Array.isArray(ticketsResult.value) ? ticketsResult.value : [],
+      );
+    } else {
+      ticketsGrid.innerHTML = `<div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">${window.ui.escapeHtml(ticketsResult.reason?.message || "Bookings could not be loaded.")}</div>`;
+    }
 
-      renderDiscounts(Array.isArray(discounts) ? discounts : []);
-    } catch (error) {
-      loading.classList.add("hidden");
+    if (discountsResult.status === "fulfilled") {
+      renderDiscounts(
+        Array.isArray(discountsResult.value) ? discountsResult.value : [],
+      );
+    } else {
+      discountGrid.innerHTML = `<div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">${window.ui.escapeHtml(discountsResult.reason?.message || "Discount tickets could not be loaded.")}</div>`;
+    }
 
-      window.ui.showAlert("ticketsAlert", "error", error.message);
+    const failure = [ticketsResult, discountsResult].find(
+      (result) => result.status === "rejected",
+    );
+    if (failure) {
+      window.ui.showAlert(
+        "ticketsAlert",
+        "error",
+        `Some ticket data could not be loaded: ${failure.reason?.message || "Request failed."}`,
+      );
     }
   }
 

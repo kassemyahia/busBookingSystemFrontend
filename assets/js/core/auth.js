@@ -73,7 +73,11 @@
     }
   }
   function updateStoredUser(value) {
-    if (value) storage().setItem(KEYS.entity, JSON.stringify(value));
+    if (!value) return;
+    const target = storage();
+    target.setItem(KEYS.entity, JSON.stringify(value));
+    const role = pick(value, "role", "Role");
+    if (role) target.setItem(KEYS.role, String(role));
   }
   function clearSession() {
     clear(localStorage);
@@ -91,8 +95,13 @@
   const login = (p, w, r) => performLogin("/api/Auth/login", p, w, r, "User");
   const employeeLogin = (p, w, r) =>
     performLogin("/api/Auth/employee/login", p, w, r, "Employee");
+  const managerLogin = (p, w, r) =>
+    performLogin("/api/Auth/manager/login", p, w, r, "Employee");
+  const staffLogin = (p, w, r) =>
+    performLogin("/api/Auth/staff/login", p, w, r, "Employee");
   const driverLogin = (p, w, r) =>
     performLogin("/api/Auth/driver/login", p, w, r, "Driver");
+  let refreshPromise = null;
   async function register(data, remember = false) {
     const response = await api.request("/api/Auth/register", {
       method: "POST",
@@ -102,6 +111,15 @@
     return response;
   }
   async function refreshSession() {
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = refreshSessionInternal();
+    try {
+      return await refreshPromise;
+    } finally {
+      refreshPromise = null;
+    }
+  }
+  async function refreshSessionInternal() {
     const target = storage(),
       refresh = target.getItem(KEYS.refresh);
     if (!refresh) return false;
@@ -119,14 +137,9 @@
       return true;
     } catch {
       const type = getAccountType();
+      const role = getRole();
       clearSession();
-      window.location.replace(
-        type === "Driver"
-          ? "../auth/driver-login.html"
-          : type === "Employee"
-            ? "../auth/staff-login.html"
-            : "../auth/login.html",
-      );
+      window.location.replace(loginUrl(type, role));
       return false;
     }
   }
@@ -135,6 +148,7 @@
   const driverMe = () => api.request("/api/Auth/driver/me", { auth: true });
   async function logout() {
     const type = getAccountType();
+    const role = getRole();
     const path =
       type === "Driver"
         ? "/api/Auth/driver/logout"
@@ -151,12 +165,35 @@
       console.warn("Server logout failed", e);
     }
     clearSession();
-    window.location.href =
-      type === "Driver"
-        ? "../auth/driver-login.html"
-        : type === "Employee"
-          ? "../auth/staff-login.html"
-          : "../auth/login.html";
+    window.location.href = loginUrl(type, role);
+  }
+  function loginUrl(type = getAccountType(), role = getRole()) {
+    if (type === "Driver" || role === "Driver")
+      return "../auth/driver-login.html";
+    if (type === "Employee" && role === "Manager")
+      return "../auth/manager-login.html";
+    if (type === "Employee") return "../auth/staff-login.html";
+    return "../auth/login.html";
+  }
+  function workspaceUrl() {
+    const type = getAccountType();
+    const role = getRole();
+    if (!getAccessToken()) return null;
+    if (type === "User") return "../user/trips.html";
+    if (type === "Driver" && role === "Driver")
+      return "../driver/driver-dashboard.html";
+    if (
+      type === "Employee" &&
+      ["Manager", "OfficeEmployee"].includes(role)
+    )
+      return "../admin/admin-dashboard.html";
+    return null;
+  }
+  function redirectAuthenticated() {
+    const target = workspaceUrl();
+    if (!target) return false;
+    window.location.replace(target);
+    return true;
   }
   function guard(valid, target) {
     if (!getAccessToken() || !valid) {
@@ -191,6 +228,8 @@
   window.auth = {
     login,
     employeeLogin,
+    managerLogin,
+    staffLogin,
     driverLogin,
     register,
     refreshSession,
@@ -211,5 +250,7 @@
     getUser,
     updateStoredUser,
     clearSession,
+    redirectAuthenticated,
+    loginUrl,
   };
 })();

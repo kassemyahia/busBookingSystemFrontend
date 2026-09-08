@@ -1,4 +1,6 @@
 (() => {
+  if (auth.redirectAuthenticated()) return;
+
   const form = document.getElementById("loginForm"),
     alert = document.getElementById("alert"),
     button = document.getElementById("loginButton");

@@ -4,7 +4,7 @@
   async function load() {
     admin.setLoading(true);
     try {
-      const [office, drivers, s] = await Promise.all([
+      const [office, drivers, s] = await admin.safeAll([
         admin.request("/api/admin/trips/get-all-employees"),
         admin.request("/api/admin/trips/drivers"),
         admin.request("/api/all-op-on-employee-table/status-list"),
@@ -77,7 +77,7 @@
           "Salary",
           "number",
           "",
-          'required min="0" step="0.01"',
+          'required min="0.01" step="0.01"',
         ) +
         admin.select("Role", "Role", [
           { value: 2, label: "Office Employee" },
@@ -130,7 +130,7 @@
           "Salary",
           "number",
           admin.pick(o, "salary", "Salary"),
-          'required min="0" step="0.01"',
+          'required min="0.01" step="0.01"',
         ),
       async (f) => {
         const body = Object.fromEntries(f);

@@ -234,17 +234,43 @@
       footer.classList.add("hidden");
       footer.classList.remove("grid");
     }
-    try {
-      const [trip, seats] = await Promise.all([
-        window.api.request(`/api/Trip/details/${tripId}`, { method: "GET", auth: true }),
-        window.api.request(`/api/Trip/${tripId}/seats`, { method: "GET", auth: true }),
-      ]);
-      tripData = trip;
-      renderTrip(trip);
-      renderSeats(seats);
-    } catch (error) {
-      seatLoading.classList.add("hidden");
-      window.ui.showAlert("tripAlert", "error", error.message);
+    const [tripResult, seatsResult] = await Promise.allSettled([
+      window.api.request(`/api/Trip/details/${tripId}`, {
+        method: "GET",
+        auth: true,
+      }),
+      window.api.request(`/api/Trip/${tripId}/seats`, {
+        method: "GET",
+        auth: true,
+      }),
+    ]);
+
+    if (tripResult.status === "fulfilled") {
+      tripData = tripResult.value;
+      renderTrip(tripData);
+    } else {
+      summary.innerHTML = `<div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">${window.ui.escapeHtml(tripResult.reason?.message || "Trip details could not be loaded.")}</div>`;
+    }
+
+    if (
+      tripResult.status === "fulfilled" &&
+      seatsResult.status === "fulfilled"
+    ) {
+      renderSeats(seatsResult.value);
+    } else {
+      seatLoading.className =
+        "rounded-xl border border-red-200 bg-red-50 px-4 py-6 text-center text-sm text-red-700";
+      seatLoading.textContent =
+        seatsResult.status === "rejected"
+          ? seatsResult.reason?.message || "Seat information could not be loaded."
+          : "Seat selection is unavailable until the trip details load.";
+    }
+
+    const failure = [tripResult, seatsResult].find(
+      (result) => result.status === "rejected",
+    );
+    if (failure) {
+      window.ui.showAlert("tripAlert", "error", failure.reason?.message || "Trip data could not be loaded.");
     }
   }
 

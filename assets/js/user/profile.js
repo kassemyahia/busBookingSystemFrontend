@@ -17,6 +17,9 @@
 
   let originalUser = null;
 
+  const passwordPattern =
+    /^(?!.*[\u0600-\u06FF])(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?])[A-Za-z0-9!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?]{8,49}$/;
+
   phone.addEventListener("input", () => {
     phone.value = phone.value.replace(/\D/g, "").slice(0, 10);
   });
@@ -189,11 +192,11 @@
         return;
       }
 
-      if (newPassword.length < 8 || newPassword.length > 49) {
+      if (!passwordPattern.test(newPassword)) {
         window.ui.showAlert(
           "passwordAlert",
           "error",
-          "New password must contain between 8 and 49 characters.",
+          "New password must contain an English letter, number and symbol, and be 8–49 characters.",
         );
 
         return;
