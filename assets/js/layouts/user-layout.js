@@ -79,9 +79,13 @@
       if (i) i.textContent = initials(user);
       return true;
     } catch (e) {
-      auth.clearSession();
-      window.location.replace("../auth/login.html");
-      return false;
+      if (e.status === 401) {
+        auth.clearSession();
+        window.location.replace("../auth/login.html");
+        return false;
+      }
+      window.ui.layoutError = e;
+      return true;
     }
   }
   window.ui = {

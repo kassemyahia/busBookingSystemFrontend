@@ -29,50 +29,26 @@
               format: (v) => `${v}%`,
             },
           ];
-        admin.table(
+        const bindActions = () => {
+          document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => form("Edit discount", b.dataset.edit, b.dataset.name, b.dataset.pct)));
+          document.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => admin.confirmAction("Deactivate this discount?", async () => { await admin.request(`${base}/delete/${b.dataset.del}`, { method: "DELETE" }); load(); })));
+          document.querySelectorAll("[data-restore]").forEach((b) => (b.onclick = async () => { await admin.request(`${base}/restore/${b.dataset.restore}`, { method: "PUT" }); load(); }));
+        };
+        admin.searchableTable(
           "tableRoot",
           a,
           cols,
           (o) =>
             `<button data-edit="${admin.pick(o, ...idKey)}" data-name="${admin.esc(admin.pick(o, "name", "Name"))}" data-pct="${admin.pick(o, "percentage", "Percentage", "discountPercentage", "DiscountPercentage")}" class="mr-3 text-teal-700">Edit</button><button data-del="${admin.pick(o, ...idKey)}" class="text-red-700">Deactivate</button>`,
+          { fields: [idKey, ["name", "Name"], ["percentage", "Percentage", "discountPercentage", "DiscountPercentage"]], placeholder: "Search active discounts…", onRender: bindActions },
         );
-        admin.table(
+        admin.searchableTable(
           "deletedRoot",
           d,
           cols,
           (o) =>
             `<button data-restore="${admin.pick(o, ...idKey)}" class="text-emerald-700">Restore</button>`,
-        );
-        document
-          .querySelectorAll("[data-edit]")
-          .forEach(
-            (b) =>
-              (b.onclick = () =>
-                form(
-                  "Edit discount",
-                  b.dataset.edit,
-                  b.dataset.name,
-                  b.dataset.pct,
-                )),
-          );
-        document.querySelectorAll("[data-del]").forEach(
-          (b) =>
-            (b.onclick = () =>
-              admin.confirmAction("Deactivate this discount?", async () => {
-                await admin.request(`${base}/delete/${b.dataset.del}`, {
-                  method: "DELETE",
-                });
-                load();
-              })),
-        );
-        document.querySelectorAll("[data-restore]").forEach(
-          (b) =>
-            (b.onclick = async () => {
-              await admin.request(`${base}/restore/${b.dataset.restore}`, {
-                method: "PUT",
-              });
-              load();
-            }),
+          { fields: [idKey, ["name", "Name"], ["percentage", "Percentage", "discountPercentage", "DiscountPercentage"]], placeholder: "Search inactive discounts…", onRender: bindActions },
         );
       } catch (e) {
         admin.alert(e.message);

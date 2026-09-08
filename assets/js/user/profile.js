@@ -17,12 +17,10 @@
 
   let originalUser = null;
 
-  const passwordPattern =
-    /^(?!.*[\u0600-\u06FF])(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?])[A-Za-z0-9!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?]{8,49}$/;
-
-  phone.addEventListener("input", () => {
-    phone.value = phone.value.replace(/\D/g, "").slice(0, 10);
-  });
+  validation.bindDigits(phone, 10);
+  firstName.addEventListener("blur", () => validation.setFieldState(firstName, validation.validUserName(firstName.value) ? "" : "First name must contain 2–49 English letters."));
+  lastName.addEventListener("blur", () => validation.setFieldState(lastName, validation.validUserName(lastName.value) ? "" : "Last name must contain 2–49 English letters."));
+  phone.addEventListener("blur", () => validation.setFieldState(phone, validation.validPhone(phone.value) ? "" : validation.PHONE_MESSAGE));
 
   function userValue(user, field) {
     return (
@@ -47,7 +45,8 @@
   async function loadProfile() {
     try {
       const user = await window.auth.me();
-
+      window.auth.updateStoredUser(user);
+      window.ui.refreshHeaderUser(user);
       fillProfile(user);
     } catch (error) {
       window.ui.showAlert("profileAlert", "error", error.message);
@@ -64,9 +63,10 @@
 
       const last = lastName.value.trim();
 
-      const phoneValue = phone.value.trim();
+      const phoneValue = validation.normalizePhone(phone.value);
 
-      if (!/^[a-zA-Z]{2,49}$/.test(first)) {
+      if (!validation.validUserName(first)) {
+        validation.setFieldState(firstName, "First name must contain 2–49 English letters.");
         window.ui.showAlert(
           "profileAlert",
           "error",
@@ -76,7 +76,8 @@
         return;
       }
 
-      if (!/^[a-zA-Z]{2,49}$/.test(last)) {
+      if (!validation.validUserName(last)) {
+        validation.setFieldState(lastName, "Last name must contain 2–49 English letters.");
         window.ui.showAlert(
           "profileAlert",
           "error",
@@ -86,7 +87,8 @@
         return;
       }
 
-      if (!/^09\d{8}$/.test(phoneValue)) {
+      if (!validation.validPhone(phoneValue)) {
+        validation.setFieldState(phone, validation.PHONE_MESSAGE);
         window.ui.showAlert(
           "profileAlert",
           "error",
@@ -192,7 +194,7 @@
         return;
       }
 
-      if (!passwordPattern.test(newPassword)) {
+      if (!validation.validPassword(newPassword)) {
         window.ui.showAlert(
           "passwordAlert",
           "error",

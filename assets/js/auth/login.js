@@ -31,8 +31,6 @@ const togglePassword = document.getElementById("togglePassword");
     0934567890
 */
 
-const PHONE_REGEX = /^09\d{8}$/;
-
 /*
     Current year
 */
@@ -44,7 +42,7 @@ document.getElementById("year").textContent = new Date().getFullYear();
 */
 
 phoneInput.addEventListener("input", function () {
-  this.value = this.value.replace(/\D/g, "").slice(0, 10);
+  this.value = validation.normalizePhone(this.value);
 
   hideAlert();
 });
@@ -78,7 +76,7 @@ function validatePhone() {
     return false;
   }
 
-  if (!PHONE_REGEX.test(phone)) {
+  if (!validation.validPhone(phone)) {
     showPhoneError("Phone must start with 09 and contain exactly 10 digits.");
 
     return false;

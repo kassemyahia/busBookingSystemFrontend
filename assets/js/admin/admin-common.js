@@ -25,10 +25,10 @@
       e.classList.toggle("hidden", !loading);
     }
   }
-  function rows(data, columns, actions) {
+  function rows(data, columns, actions, emptyMessage = "No data available.") {
     const list = api.asArray(data);
     if (!list.length)
-      return `<tr><td colspan="${columns.length + (actions ? 1 : 0)}" class="px-5 py-10 text-center text-slate-400">No data available.</td></tr>`;
+      return `<tr><td colspan="${columns.length + (actions ? 1 : 0)}" class="px-5 py-10 text-center text-slate-400">${esc(emptyMessage)}</td></tr>`;
     return list
       .map(
         (item) =>
@@ -36,9 +36,45 @@
       )
       .join("");
   }
-  function table(target, data, columns, actions) {
+  function table(target, data, columns, actions, emptyMessage = "No data available.") {
     document.getElementById(target).innerHTML =
-      `<div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm"><table class="w-full text-left"><thead class="bg-slate-50"><tr>${columns.map((c) => `<th class="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">${esc(c.label)}</th>`).join("")}${actions ? '<th class="px-5 py-3 text-xs font-semibold uppercase text-slate-500">Actions</th>' : ""}</tr></thead><tbody>${rows(data, columns, actions)}</tbody></table></div>`;
+      `<div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm"><table class="w-full text-left"><thead class="bg-slate-50"><tr>${columns.map((c) => `<th class="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">${esc(c.label)}</th>`).join("")}${actions ? '<th class="px-5 py-3 text-xs font-semibold uppercase text-slate-500">Actions</th>' : ""}</tr></thead><tbody>${rows(data, columns, actions, emptyMessage)}</tbody></table></div>`;
+  }
+  const searches = new Map();
+  function searchableTable(target, data, columns, actions, options = {}) {
+    const source = api.asArray(data).slice();
+    let state = searches.get(target);
+    const currentTableRoot = document.getElementById(target);
+    if (state && state.tableRoot !== currentTableRoot) {
+      searches.delete(target);
+      state = null;
+    }
+    if (!state) {
+      const tableRoot = currentTableRoot;
+      const mount = document.createElement("div");
+      mount.id = `${target}Search`;
+      tableRoot.before(mount);
+      state = { source: [], query: "", options: {}, search: null, tableRoot };
+      const render = (query = state.query) => {
+        state.query = query;
+        const filtered = searchUtils.filterRows(state.source, query, state.options.fields || []);
+        table(target, filtered, state.options.columns, state.options.actions, query.trim() ? "No matching results." : state.options.emptyMessage);
+        state.search?.setCount(filtered.length, state.source.length);
+        state.options.onRender?.(filtered);
+      };
+      state.render = render;
+      state.search = searchUtils.createSearch({
+        mount,
+        id: `${target}Query`,
+        placeholder: options.placeholder || "Search records…",
+        onChange: render,
+      });
+      searches.set(target, state);
+    }
+    state.source = source;
+    state.options = { ...options, columns, actions };
+    state.render(state.search?.query() || "");
+    return state;
   }
   function openModal(title, body, onSubmit) {
     const root = document.getElementById("modalRoot");
@@ -52,7 +88,10 @@
       b.disabled = true;
       b.textContent = "Saving…";
       try {
-        await onSubmit(new FormData(e.target));
+        if (window.validation && !validation.validateConstraints(e.target)) {
+          throw new Error("Please correct the highlighted fields.");
+        }
+        await onSubmit(new FormData(e.target), e.target);
         root.innerHTML = "";
       } catch (err) {
         const box = document.getElementById("modalError");
@@ -98,6 +137,7 @@
     alert,
     setLoading,
     table,
+    searchableTable,
     openModal,
     input,
     select,

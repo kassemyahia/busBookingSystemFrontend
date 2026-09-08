@@ -1,6 +1,42 @@
 (async () => {
   if (!(await staffLayout.init())) return;
   let statuses = [];
+  let allEmployees = [];
+  let employeeDirectoryComplete = false;
+  const createdNationalNumbers = new Set();
+  const employeeFields = [["id", "Id"], ["firstName", "FirstName"], ["lastName", "LastName"], ["phone", "Phone"], ["role", "Role"], ["status", "Status"], ["salary", "Salary"]];
+  function phoneTaken(phone, currentId = "") {
+    return allEmployees.some((employee) =>
+      validation.normalizePhone(admin.pick(employee, "phone", "Phone")) === phone &&
+      String(admin.pick(employee, "id", "Id")) !== String(currentId),
+    );
+  }
+  function validateEmployeeForm(form, currentId = "", adding = false) {
+    const checks = [
+      [form.FirstName, validation.validName(form.FirstName.value), "Enter a valid first name."],
+      [form.LastName, validation.validName(form.LastName.value), "Enter a valid last name."],
+      [form.Phone, validation.validPhone(form.Phone.value), validation.PHONE_MESSAGE],
+      [form.Salary, validation.validPositive(form.Salary.value), "Salary must be greater than zero."],
+    ];
+    if (validation.validPhone(form.Phone.value) && phoneTaken(validation.normalizePhone(form.Phone.value), currentId))
+      checks[2][2] = "This phone number is already used by another employee.";
+    if (validation.validPhone(form.Phone.value) && phoneTaken(validation.normalizePhone(form.Phone.value), currentId)) checks[2][1] = false;
+    if (adding) {
+      checks.push([form.Password, validation.validPassword(form.Password.value), validation.PASSWORD_MESSAGE]);
+      const national = validation.normalizeNationalNumber(form.NationalNumber.value);
+      checks.push([form.NationalNumber, validation.validNationalNumber(national) && !createdNationalNumbers.has(national), createdNationalNumbers.has(national) ? "This national number was already used during this session." : validation.NATIONAL_MESSAGE]);
+    }
+    checks.forEach(([input, valid, message]) => validation.setFieldState(input, valid ? "" : message));
+    if (checks[2][1] && employeeDirectoryComplete) validation.setFieldState(form.Phone, "Available", "success");
+    return checks.every(([, valid]) => valid);
+  }
+  function bindEmployeeValidation(currentId = "", adding = false) {
+    const form = document.getElementById("modalForm");
+    validation.bindDigits(form.Phone, 10);
+    if (adding) validation.bindDigits(form.NationalNumber, 11);
+    [form.FirstName, form.LastName, form.Phone, form.Salary, ...(adding ? [form.Password, form.NationalNumber] : [])]
+      .forEach((input) => input.addEventListener("blur", () => validateEmployeeForm(form, currentId, adding)));
+  }
   async function load() {
     admin.setLoading(true);
     try {
@@ -9,12 +45,18 @@
         admin.request("/api/admin/trips/drivers"),
         admin.request("/api/all-op-on-employee-table/status-list"),
       ]);
+      employeeDirectoryComplete = Array.isArray(office) && Array.isArray(drivers);
       statuses = api.asArray(s);
       const all = [
         ...api.asArray(office),
         ...api.asArray(drivers).map((x) => ({ ...x, Role: "Driver" })),
       ];
-      admin.table(
+      allEmployees = all.slice();
+      const bindActions = () => {
+        document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(allEmployees.find((x) => String(admin.pick(x, "id", "Id")) === b.dataset.edit))));
+        document.querySelectorAll("[data-status]").forEach((b) => (b.onclick = () => changeStatus(b.dataset.status)));
+      };
+      admin.searchableTable(
         "tableRoot",
         all,
         [
@@ -31,21 +73,8 @@
         ],
         (o) =>
           `<button data-edit="${admin.pick(o, "id", "Id")}" class="mr-3 text-teal-700">Edit</button><button data-status="${admin.pick(o, "id", "Id")}" class="text-amber-700">Change status</button>`,
+        { fields: employeeFields, placeholder: "Search employees by ID, name, phone, role or status…", onRender: bindActions },
       );
-      document
-        .querySelectorAll("[data-edit]")
-        .forEach(
-          (b) =>
-            (b.onclick = () =>
-              edit(
-                all.find(
-                  (x) => String(admin.pick(x, "id", "Id")) === b.dataset.edit,
-                ),
-              )),
-        );
-      document
-        .querySelectorAll("[data-status]")
-        .forEach((b) => (b.onclick = () => changeStatus(b.dataset.status)));
     } catch (e) {
       admin.alert(e.message);
     } finally {
@@ -91,16 +120,22 @@
           "",
         ),
       async (f) => {
+        const form = document.getElementById("modalForm");
+        if (!validateEmployeeForm(form, "", true)) throw new Error("Please correct the highlighted fields.");
         const body = Object.fromEntries(f);
+        body.Phone = validation.normalizePhone(body.Phone);
+        body.NationalNumber = validation.normalizeNationalNumber(body.NationalNumber);
         body.Salary = Number(body.Salary);
         body.Role = Number(body.Role);
         await admin.request("/api/all-op-on-employee-table/add", {
           method: "POST",
           body: JSON.stringify(body),
         });
+        createdNationalNumbers.add(body.NationalNumber);
         await load();
       },
     );
+    bindEmployeeValidation("", true);
   }
   function edit(o) {
     const id = admin.pick(o, "id", "Id");
@@ -133,7 +168,10 @@
           'required min="0.01" step="0.01"',
         ),
       async (f) => {
+        const form = document.getElementById("modalForm");
+        if (!validateEmployeeForm(form, id, false)) throw new Error("Please correct the highlighted fields.");
         const body = Object.fromEntries(f);
+        body.Phone = validation.normalizePhone(body.Phone);
         body.Salary = Number(body.Salary);
         await admin.request(`/api/all-op-on-employee-table/update/${id}`, {
           method: "PATCH",
@@ -142,6 +180,7 @@
         await load();
       },
     );
+    bindEmployeeValidation(id, false);
   }
   function changeStatus(id) {
     admin.openModal(

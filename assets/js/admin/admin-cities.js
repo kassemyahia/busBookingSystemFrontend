@@ -15,7 +15,8 @@
             `/api/employee/city/cities/most-travel-month?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
           ),
         ]);
-      admin.table(
+      const bindCityActions = () => document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => cityModal("Edit city", b.dataset.name, async (f) => admin.request(`/api/employee/city/update-city/${b.dataset.edit}`, { method: "PUT", body: JSON.stringify({ CityName: f.get("CityName") }) }))));
+      admin.searchableTable(
         "tableRoot",
         cities,
         [
@@ -24,19 +25,7 @@
         ],
         (o) =>
           `<button data-edit="${admin.pick(o, "id", "Id")}" data-name="${admin.esc(admin.pick(o, "name", "Name"))}" class="text-teal-700">Edit</button>`,
-      );
-      document.querySelectorAll("[data-edit]").forEach(
-        (b) =>
-          (b.onclick = () =>
-            cityModal("Edit city", b.dataset.name, async (f) =>
-              admin.request(
-                `/api/employee/city/update-city/${b.dataset.edit}`,
-                {
-                  method: "PUT",
-                  body: JSON.stringify({ CityName: f.get("CityName") }),
-                },
-              ),
-            )),
+        { fields: [["id", "Id"], ["name", "Name"]], placeholder: "Search cities by name or ID…", onRender: bindCityActions },
       );
       document.getElementById("statsRoot").innerHTML =
         `<div class="grid gap-6 lg:grid-cols-2"><div><h2 class="mb-3 text-xl font-bold">Most used by trips</h2><div id="most"></div></div><div><h2 class="mb-3 text-xl font-bold">Least used by trips</h2><div id="least"></div></div><div><h2 class="mb-3 text-xl font-bold">Most used by routes</h2><div id="mostRoutes"></div></div><div><h2 class="mb-3 text-xl font-bold">Least used by routes</h2><div id="leastRoutes"></div></div></div><section class="mt-8"><h2 class="mb-3 text-xl font-bold">Most travelled this month</h2><div id="monthlyCities"></div></section>`;
@@ -66,11 +55,11 @@
           ],
         },
       ];
-      admin.table("most", most, cols);
-      admin.table("least", least, cols);
-      admin.table("mostRoutes", api.asArray(mostRoutes), routeCols);
-      admin.table("leastRoutes", api.asArray(leastRoutes), routeCols);
-      admin.table("monthlyCities", api.asArray(monthly), cols);
+      admin.searchableTable("most", most, cols, null, { fields: cols.map((c) => c.keys), placeholder: "Search most-used cities…" });
+      admin.searchableTable("least", least, cols, null, { fields: cols.map((c) => c.keys), placeholder: "Search least-used cities…" });
+      admin.searchableTable("mostRoutes", api.asArray(mostRoutes), routeCols, null, { fields: routeCols.map((c) => c.keys), placeholder: "Search most-used routes…" });
+      admin.searchableTable("leastRoutes", api.asArray(leastRoutes), routeCols, null, { fields: routeCols.map((c) => c.keys), placeholder: "Search least-used routes…" });
+      admin.searchableTable("monthlyCities", api.asArray(monthly), cols, null, { fields: cols.map((c) => c.keys), placeholder: "Search monthly city activity…" });
     } catch (e) {
       admin.alert(e.message);
     } finally {

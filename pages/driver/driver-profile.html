@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Driver Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../assets/css/styles.css" />
+  </head>
+  <body class="bg-slate-50 text-slate-900">
+    <div id="driverShell"></div>
+    <main class="mx-auto max-w-6xl p-5 lg:p-8">
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-3"><div><h1 class="text-3xl font-bold">Driver profile</h1><p class="mt-1 text-slate-500">Your current driver account details.</p></div><a href="./driver-dashboard.html" class="rounded-xl border bg-white px-4 py-2 font-semibold">Back to dashboard</a></div>
+      <div id="pageAlert" class="hidden"></div><div id="profileLoading">Loading profile…</div><div id="driverProfile"></div>
+    </main>
+    <script src="../../assets/js/core/config.js"></script><script src="../../assets/js/core/api.js"></script><script src="../../assets/js/core/auth.js"></script><script src="../../assets/js/admin/admin-common.js"></script><script src="../../assets/js/layouts/driver-layout.js"></script><script src="../../assets/js/driver/driver-profile.js"></script>
+  </body>
+</html>

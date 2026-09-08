@@ -13,39 +13,25 @@
           { label: "Name", keys: ["name", "Name", "type", "Type"] },
           { label: "Capacity", keys: ["capacity", "Capacity"] },
         ];
-      admin.table(
+      const bindActions = () => {
+        document.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => admin.confirmAction("Deactivate this bus type?", async () => { await admin.request(`${base}/delete-bus-type/${b.dataset.del}`, { method: "DELETE" }); load(); })));
+        document.querySelectorAll("[data-restore]").forEach((b) => (b.onclick = async () => { await admin.request(`${base}/restore-bus-type/${b.dataset.restore}`, { method: "PUT" }); load(); }));
+      };
+      admin.searchableTable(
         "tableRoot",
         a,
         cols,
         (o) =>
           `<button data-del="${admin.pick(o, "busTypeId", "BusTypeId", "id", "Id")}" class="text-red-700">Deactivate</button>`,
+        { fields: cols.map((c) => c.keys), placeholder: "Search active bus types…", onRender: bindActions },
       );
-      admin.table(
+      admin.searchableTable(
         "deletedRoot",
         d,
         cols,
         (o) =>
           `<button data-restore="${admin.pick(o, "busTypeId", "BusTypeId", "id", "Id")}" class="text-emerald-700">Restore</button>`,
-      );
-      document.querySelectorAll("[data-del]").forEach(
-        (b) =>
-          (b.onclick = () =>
-            admin.confirmAction("Deactivate this bus type?", async () => {
-              await admin.request(`${base}/delete-bus-type/${b.dataset.del}`, {
-                method: "DELETE",
-              });
-              load();
-            })),
-      );
-      document.querySelectorAll("[data-restore]").forEach(
-        (b) =>
-          (b.onclick = async () => {
-            await admin.request(
-              `${base}/restore-bus-type/${b.dataset.restore}`,
-              { method: "PUT" },
-            );
-            load();
-          }),
+        { fields: cols.map((c) => c.keys), placeholder: "Search inactive bus types…", onRender: bindActions },
       );
     } catch (e) {
       admin.alert(e.message);

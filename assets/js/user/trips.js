@@ -7,6 +7,8 @@
   const end = document.getElementById("endCity");
   let defaultSortValue = "date";
   let tripOptionsPromise;
+  let sourceTrips = [];
+  let tripSearch;
 
   function getTripOptions() {
     tripOptionsPromise ??= api.request("/api/Trip/search-options", {
@@ -120,7 +122,7 @@
       );
     }
   }
-  function renderTrips(data) {
+  function renderTrips(data, noMatch = false) {
     loading.classList.add("hidden");
     const trips = api.asArray(data);
     const popularRoot = document.getElementById("popularRoutes");
@@ -151,7 +153,7 @@
       popularRoot.dataset.ready = "true";
     }
     if (!trips.length) {
-      grid.innerHTML = `<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-14 text-center"><div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-2xl">⌕</div><h3 class="mt-4 text-lg font-bold">No trips found</h3><p class="mt-2 text-sm text-slate-500">Adjust your route or travel date and search again.</p></div>`;
+      grid.innerHTML = `<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-14 text-center"><div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-2xl">⌕</div><h3 class="mt-4 text-lg font-bold">${noMatch ? "No matching results" : "No trips found"}</h3><p class="mt-2 text-sm text-slate-500">${noMatch ? "Clear the text search or try another term." : "Adjust your route or travel date and search again."}</p></div>`;
       return;
     }
     grid.innerHTML = trips
@@ -173,12 +175,22 @@
       })
       .join("");
   }
+  function applyTextSearch(query = "") {
+    const filtered = searchUtils.filterRows(sourceTrips, query, [
+      ["tripId", "TripId"], ["startCity", "StartCity"], ["endCity", "EndCity"],
+      ["busType", "BusType"], ["departureTime", "DepartureTime"],
+      ["discountName", "DiscountName"], ["basePrice", "BasePrice"],
+    ]);
+    renderTrips(filtered, Boolean(query.trim()));
+    tripSearch?.setCount(filtered.length, sourceTrips.length);
+  }
   async function loadTrips(endpoint = "/api/Trip/all-trips") {
     loading.classList.remove("hidden");
     grid.innerHTML = "";
     ui.hideAlert("tripsAlert");
     try {
-      renderTrips(await api.request(endpoint, { auth: true }));
+      sourceTrips = api.asArray(await api.request(endpoint, { auth: true })).slice();
+      applyTextSearch(tripSearch?.query() || "");
     } catch (e) {
       loading.classList.add("hidden");
       ui.showAlert("tripsAlert", "error", e.message);
@@ -223,5 +235,6 @@
     loadSearchOptions(),
     loadBusTypes(),
   ]);
+  tripSearch = searchUtils.createSearch({ mount: "tripTextSearch", id: "tripTextQuery", placeholder: "Search loaded trips by route, bus type, ID, date, discount or price…", onChange: applyTextSearch });
   form.requestSubmit();
 })();

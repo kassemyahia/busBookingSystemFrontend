@@ -13,44 +13,27 @@
       const data = await admin.request(
         q.size ? `${base}/search?${q}` : `${base}/all-trips`,
       );
-      admin.table(
+      const columns = [
+        { label: "ID", keys: ["tripId", "TripId"] },
+        { label: "Departure", keys: ["departureTime", "DepartureTime"] },
+        { label: "Route", keys: ["startCity", "StartCity"], format: (v, o) => `${v} → ${admin.pick(o, "endCity", "EndCity")}` },
+        { label: "Bus type", keys: ["busType", "BusType"] },
+        { label: "Price", keys: ["basePrice", "BasePrice"] },
+        { label: "Discount", keys: ["discountName", "DiscountName"] },
+        { label: "State", keys: ["isDeleted", "IsDeleted"], format: (v) => (v ? "Inactive" : "Active") },
+      ];
+      const bindActions = () => {
+        document.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => details(b.dataset.view)));
+        document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(b.dataset.edit)));
+        document.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => admin.confirmAction("Deactivate this trip?", async () => { await admin.request(`${base}/delete/${b.dataset.del}`, { method: "PUT" }); load(); })));
+      };
+      admin.searchableTable(
         "tableRoot",
         data,
-        [
-          { label: "ID", keys: ["tripId", "TripId"] },
-          { label: "Departure", keys: ["departureTime", "DepartureTime"] },
-          {
-            label: "Route",
-            keys: ["startCity", "StartCity"],
-            format: (v, o) => `${v} → ${admin.pick(o, "endCity", "EndCity")}`,
-          },
-          { label: "Bus type", keys: ["busType", "BusType"] },
-          { label: "Price", keys: ["basePrice", "BasePrice"] },
-          { label: "Discount", keys: ["discountName", "DiscountName"] },
-          {
-            label: "State",
-            keys: ["isDeleted", "IsDeleted"],
-            format: (v) => (v ? "Inactive" : "Active"),
-          },
-        ],
+        columns,
         (o) =>
           `<button data-view="${admin.pick(o, "tripId", "TripId")}" class="mr-3 text-teal-700">Details</button><button data-edit="${admin.pick(o, "tripId", "TripId")}" class="mr-3 text-indigo-700">Edit</button><button data-del="${admin.pick(o, "tripId", "TripId")}" class="text-red-700">Deactivate</button>`,
-      );
-      document
-        .querySelectorAll("[data-view]")
-        .forEach((b) => (b.onclick = () => details(b.dataset.view)));
-      document
-        .querySelectorAll("[data-edit]")
-        .forEach((b) => (b.onclick = () => edit(b.dataset.edit)));
-      document.querySelectorAll("[data-del]").forEach(
-        (b) =>
-          (b.onclick = () =>
-            admin.confirmAction("Deactivate this trip?", async () => {
-              await admin.request(`${base}/delete/${b.dataset.del}`, {
-                method: "PUT",
-              });
-              load();
-            })),
+        { fields: [...columns.map((c) => c.keys), ["endCity", "EndCity"]], placeholder: "Search filtered trips by ID, route, bus type, date, price or discount…", onRender: bindActions },
       );
     } catch (e) {
       admin.alert(e.message);
@@ -67,16 +50,19 @@
         admin.request(`/api/admin/trips/trip/${id}/confirmed-passengers`),
       ]);
       document.getElementById("detailsRoot").innerHTML =
-        `<section class="rounded-2xl border bg-white p-5"><div class="flex justify-between"><h2 class="text-xl font-bold">Trip #${id}</h2><button onclick="document.getElementById('detailsRoot').innerHTML=''">✕</button></div><p class="mt-3 text-sm text-slate-600">${admin.esc(admin.pick(d, "startCity", "StartCity"))} → ${admin.esc(admin.pick(d, "endCity", "EndCity"))} · ${admin.esc(admin.pick(d, "departureTime", "DepartureTime"))} · Driver: ${admin.esc(admin.pick(d, "driverName", "DriverName"))}</p><p class="mt-2 text-sm">Seats: ${admin.pick(summary, "availableSeats", "AvailableSeats") || 0} available, ${admin.pick(summary, "reservedSeats", "ReservedSeats") || 0} reserved, ${admin.pick(summary, "confirmedSeats", "ConfirmedSeats") || 0} confirmed.</p><div class="mt-5 grid gap-6 lg:grid-cols-2"><div><h3 class="mb-2 font-bold">Seats and users</h3><div id="seatTable"></div></div><div><h3 class="mb-2 font-bold">Confirmed passengers</h3><div id="passTable"></div></div></div></section>`;
-      admin.table("seatTable", seats, [
+        `<section class="rounded-2xl border bg-white p-5"><div class="flex justify-between"><h2 class="text-xl font-bold">Trip #${id}</h2><button id="closeDetails" type="button" aria-label="Close trip details">✕</button></div><p class="mt-3 text-sm text-slate-600">${admin.esc(admin.pick(d, "startCity", "StartCity"))} → ${admin.esc(admin.pick(d, "endCity", "EndCity"))} · ${admin.esc(admin.pick(d, "departureTime", "DepartureTime"))} · Driver: ${admin.esc(admin.pick(d, "driverName", "DriverName"))}</p><p class="mt-2 text-sm">Seats: ${admin.pick(summary, "availableSeats", "AvailableSeats") || 0} available, ${admin.pick(summary, "reservedSeats", "ReservedSeats") || 0} reserved, ${admin.pick(summary, "confirmedSeats", "ConfirmedSeats") || 0} confirmed.</p><div class="mt-5 grid gap-6 lg:grid-cols-2"><div><h3 class="mb-2 font-bold">Seats and users</h3><div id="seatTable"></div></div><div><h3 class="mb-2 font-bold">Confirmed passengers</h3><div id="passTable"></div></div></div></section>`;
+      document.getElementById("closeDetails").onclick = () => document.getElementById("detailsRoot").replaceChildren();
+      const seatColumns = [
         { label: "Seat", keys: ["seatNumber", "SeatNumber"] },
         { label: "Status", keys: ["seatStatus", "SeatStatus"] },
         { label: "User", keys: ["fullName", "FullName"] },
-      ]);
-      admin.table("passTable", passengers, [
+      ];
+      const passengerColumns = [
         { label: "Seat", keys: ["seatNumber", "SeatNumber"] },
         { label: "Passenger", keys: ["fullName", "FullName"] },
-      ]);
+      ];
+      admin.searchableTable("seatTable", seats, seatColumns, null, { fields: seatColumns.map((c) => c.keys), placeholder: "Search seats or users…" });
+      admin.searchableTable("passTable", passengers, passengerColumns, null, { fields: passengerColumns.map((c) => c.keys), placeholder: "Search confirmed passengers…" });
     } catch (e) {
       admin.alert(e.message);
     }
@@ -149,6 +135,11 @@
         true,
       );
     admin.openModal("Create trip", body, async (f) => {
+      const departureInput = document.getElementById("modalForm").DepartureTime;
+      if (!validation.isFutureDateTime(f.get("DepartureTime"))) {
+        validation.setFieldState(departureInput, "Departure time must be in the future.");
+        throw new Error("Departure time must be in the future.");
+      }
       const o = {
         RoutePriceId: Number(f.get("RoutePriceId")),
         DepartureTime: f.get("DepartureTime"),
@@ -165,6 +156,8 @@
       load();
     });
     const form = document.getElementById("modalForm");
+    form.DepartureTime.min = validation.minimumFutureDateTime();
+    form.DepartureTime.addEventListener("blur", () => validation.setFieldState(form.DepartureTime, validation.isFutureDateTime(form.DepartureTime.value) ? "" : "Departure time must be in the future."));
     form.RoutePriceId.onchange = form.DepartureTime.onchange = () =>
       availability(form);
   }
@@ -181,13 +174,14 @@
         ds = api.asArray(
           admin.pick(data, "availableDiscounts", "AvailableDiscounts"),
         );
+      const originalDeparture = validation.toLocalDateTimeInputValue(admin.pick(t, "departureTime", "DepartureTime"));
       admin.openModal(
         "Edit trip",
         admin.input(
           "DepartureTime",
           "Departure time",
           "datetime-local",
-          String(admin.pick(t, "departureTime", "DepartureTime")).slice(0, 16),
+          originalDeparture,
           "",
         ) +
           admin.select(
@@ -222,14 +216,17 @@
           ),
         async (f) => {
           const o = { TripId: Number(id) };
-          for (const k of [
-            "DepartureTime",
-            "EmployeeId",
-            "BusId",
-            "TripDiscountId",
-          ]) {
+          const departure = f.get("DepartureTime");
+          if (departure !== originalDeparture) {
+            if (!validation.isFutureDateTime(departure)) {
+              validation.setFieldState(document.getElementById("modalForm").DepartureTime, "Departure time must be in the future.");
+              throw new Error("Departure time must be in the future.");
+            }
+            o.DepartureTime = departure;
+          }
+          for (const k of ["EmployeeId", "BusId", "TripDiscountId"]) {
             const v = f.get(k);
-            if (v) o[k] = k === "DepartureTime" ? v : Number(v);
+            if (v) o[k] = Number(v);
           }
           await admin.request(`${base}/update`, {
             method: "PATCH",
@@ -238,6 +235,12 @@
           load();
         },
       );
+      const editForm = document.getElementById("modalForm");
+      if (validation.isFutureDateTime(originalDeparture)) editForm.DepartureTime.min = validation.minimumFutureDateTime();
+      editForm.DepartureTime.addEventListener("blur", () => {
+        const changed = editForm.DepartureTime.value !== originalDeparture;
+        validation.setFieldState(editForm.DepartureTime, !changed || validation.isFutureDateTime(editForm.DepartureTime.value) ? "" : "Departure time must be in the future.");
+      });
     } catch (e) {
       admin.alert(e.message);
     }

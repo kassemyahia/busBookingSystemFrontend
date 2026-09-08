@@ -7,7 +7,7 @@
       const data = await admin.request(
         `/api/admin/user-discount-ticket/user/${id}`,
       );
-      admin.table("tableRoot", data, [
+      const columns = [
         { label: "Ticket ID", keys: ["ticketId", "TicketId"] },
         { label: "Discount", keys: ["discountName", "DiscountName"] },
         {
@@ -21,7 +21,8 @@
           format: admin.fmt,
         },
         { label: "Ends", keys: ["endDate", "EndDate"], format: admin.fmt },
-      ]);
+      ];
+      admin.searchableTable("tableRoot", data, columns, null, { fields: columns.map((c) => c.keys), placeholder: "Search this user's discount tickets…" });
     } catch (e) {
       admin.alert(e.message);
     } finally {

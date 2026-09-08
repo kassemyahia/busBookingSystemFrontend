@@ -7,6 +7,7 @@
   ]);
   const links = [
     ["admin-dashboard.html", "Dashboard"],
+    ["admin-profile.html", "Profile"],
     ["admin-trips.html", "Trips"],
     ["admin-buses.html", "Buses"],
     ["admin-bus-types.html", "Bus Types"],
@@ -19,20 +20,23 @@
   ];
   async function init() {
     if (!auth.requireEmployee()) return false;
-    let me;
+    let me = auth.getUser() || {};
     try {
       me = await auth.employeeMe();
       auth.updateStoredUser(me);
     } catch (error) {
-      const target = auth.loginUrl();
-      auth.clearSession();
-      window.location.replace(target);
-      return false;
+      if (error.status === 401) {
+        const target = auth.loginUrl();
+        auth.clearSession();
+        window.location.replace(target);
+        return false;
+      }
+      window.staffLayout.lastError = error;
     }
     const page = location.pathname.split("/").pop();
     if (managerOnly.has(page) && !auth.requireManager()) return false;
     const role = auth.getRole(),
-      entity = me || auth.getUser() || {},
+      entity = me,
       name =
         admin.pick(entity, "fullName", "FullName") ||
         `${admin.pick(entity, "firstName", "FirstName")} ${admin.pick(entity, "lastName", "LastName")}`.trim() ||

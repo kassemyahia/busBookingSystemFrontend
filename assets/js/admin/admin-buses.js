@@ -16,7 +16,8 @@
       const buses = await admin.request(
         `/api/employee/buses/${q.size ? `search-buses?${q}` : "all-buses"}`,
       );
-      admin.table(
+      const bindMain = () => document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => change(b.dataset.edit)));
+      admin.searchableTable(
         "tableRoot",
         buses,
         [
@@ -28,10 +29,8 @@
         ],
         (o) =>
           `<button data-edit="${admin.pick(o, "busId", "BusId")}" class="text-teal-700">Change status</button>`,
+        { fields: [["busId", "BusId"], ["busNumber", "BusNumber"], ["type", "Type"], ["capacity", "Capacity"], ["status", "Status"]], placeholder: "Search buses by number, type, ID or status…", onRender: bindMain },
       );
-      document
-        .querySelectorAll("[data-edit]")
-        .forEach((b) => (b.onclick = () => change(b.dataset.edit)));
       const now = new Date();
       const [most, least, road, monthly, deletionSuggestions] =
         await admin.safeAll([
@@ -65,8 +64,8 @@
         },
         { label: "Status", keys: ["status", "Status"] },
       ];
-      admin.table("monthlyActivityRoot", api.asArray(monthly), insightColumns);
-      admin.table(
+      admin.searchableTable("monthlyActivityRoot", api.asArray(monthly), insightColumns, null, { fields: insightColumns.map((c) => c.keys), placeholder: "Search monthly bus activity…" });
+      admin.searchableTable(
         "suggestedDeletionRoot",
         api.asArray(deletionSuggestions),
         [
@@ -79,10 +78,8 @@
             ? ""
             : `<button data-suggested-bus="${admin.esc(id)}" class="text-teal-700">Change status</button>`;
         },
+        { fields: insightColumns.map((c) => c.keys), placeholder: "Search deletion suggestions…", onRender: () => document.querySelectorAll("[data-suggested-bus]").forEach((button) => { button.onclick = () => change(button.dataset.suggestedBus); }) },
       );
-      document.querySelectorAll("[data-suggested-bus]").forEach((button) => {
-        button.onclick = () => change(button.dataset.suggestedBus);
-      });
     } catch (e) {
       admin.alert(e.message);
     } finally {

@@ -6,9 +6,11 @@
   const alertBox = document.getElementById("recoveryAlert");
   const forms = [phoneForm, codeForm, verifyForm, passwordForm];
   let verifiedPhone = "";
-  const phonePattern = /^09\d{8}$/;
   const codePattern = /^\d{4}$/;
-  const passwordPattern = /^(?!.*[\u0600-\u06FF])(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?])[A-Za-z0-9!@#$%^&*()_\-=\[\]{};':"\\|,.<>/?]{8,49}$/;
+  validation.bindDigits(document.getElementById("recoveryPhone"), 10);
+  validation.bindDigits(document.getElementById("verificationPhone"), 10);
+  validation.bindDigits(document.getElementById("recoveryCode"), 4);
+  validation.bindDigits(document.getElementById("verificationCode"), 4);
 
   function message(type, text) {
     const colors =
@@ -46,7 +48,7 @@
   phoneForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const phone = document.getElementById("recoveryPhone").value.trim();
-    if (!phonePattern.test(phone)) {
+    if (!validation.validPhone(phone)) {
       message("error", "Enter a valid 10-digit phone number beginning with 09.");
       return;
     }
@@ -82,7 +84,7 @@
     event.preventDefault();
     const phone = document.getElementById("verificationPhone").value.trim();
     const code = document.getElementById("verificationCode").value.trim();
-    if (!phonePattern.test(phone)) {
+    if (!validation.validPhone(phone)) {
       message("error", "Enter a valid 10-digit phone number beginning with 09.");
       return;
     }
@@ -105,7 +107,7 @@
     event.preventDefault();
     const password = document.getElementById("newRecoveryPassword").value;
     const confirmPassword = document.getElementById("confirmRecoveryPassword").value;
-    if (!passwordPattern.test(password)) {
+    if (!validation.validPassword(password)) {
       message("error", "Password must include an English letter, number and symbol, and contain 8–49 characters.");
       return;
     }

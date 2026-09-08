@@ -26,6 +26,12 @@
   const keepBookingButton = document.getElementById("keepBooking");
 
   let bookingAwaitingCancellation = null;
+  let sourceTickets = [];
+  let sourceDiscounts = [];
+  let ticketSearch;
+  let activeQuery = "";
+  let ticketsAvailable = false;
+  let discountsAvailable = false;
 
   function hideCancellationConfirmation() {
     bookingAwaitingCancellation = null;
@@ -94,11 +100,11 @@
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center lg:col-span-2">
 
                     <p class="text-lg font-semibold">
-                        No tickets yet
+                        ${activeQuery ? "No matching results" : "No tickets yet"}
                     </p>
 
                     <p class="mt-2 text-sm text-slate-400">
-                        Your bookings will appear here.
+                        ${activeQuery ? "Clear the search or try another term." : "Your bookings will appear here."}
                     </p>
 
                     <a
@@ -306,11 +312,11 @@
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center lg:col-span-2">
 
                     <p class="font-semibold">
-                        No discount tickets
+                        ${activeQuery ? "No matching results" : "No discount tickets"}
                     </p>
 
                     <p class="mt-2 text-sm text-slate-400">
-                        Any available discount tickets will appear here.
+                        ${activeQuery ? "Clear the search or try another term." : "Any available discount tickets will appear here."}
                     </p>
 
                 </div>
@@ -376,6 +382,20 @@
                 `;
       })
       .join("");
+  }
+
+  function applySearch(query = "") {
+    activeQuery = query.trim();
+    const ticketFields = [["bookingId", "BookingId"], ["tripId", "TripId"], ["startCity", "StartCity"], ["endCity", "EndCity"], ["tripDate", "TripDate"], ["busType", "BusType"], ["busNumber", "BusNumber"], ["seatNumber", "SeatNumber"], ["status", "Status"], ["finalPrice", "FinalPrice"]];
+    const discountFields = [["discountTicketNumber", "DiscountTicketNumber"], ["discountName", "DiscountName"], ["percentage", "Percentage"], ["startDate", "StartDate"], ["endDate", "EndDate"]];
+    const tickets = searchUtils.filterRows(sourceTickets, query, ticketFields);
+    const discounts = searchUtils.filterRows(sourceDiscounts, query, discountFields);
+    if (ticketsAvailable) renderTickets(tickets);
+    if (discountsAvailable) renderDiscounts(discounts);
+    ticketSearch?.setCount(
+      (ticketsAvailable ? tickets.length : 0) + (discountsAvailable ? discounts.length : 0),
+      (ticketsAvailable ? sourceTickets.length : 0) + (discountsAvailable ? sourceDiscounts.length : 0),
+    );
   }
 
   async function cancelBooking(bookingId) {
@@ -473,18 +493,18 @@
 
     loading.classList.add("hidden");
     if (ticketsResult.status === "fulfilled") {
-      renderTickets(
-        Array.isArray(ticketsResult.value) ? ticketsResult.value : [],
-      );
+      ticketsAvailable = true;
+      sourceTickets = Array.isArray(ticketsResult.value) ? ticketsResult.value.slice() : [];
     } else {
+      ticketsAvailable = false;
       ticketsGrid.innerHTML = `<div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">${window.ui.escapeHtml(ticketsResult.reason?.message || "Bookings could not be loaded.")}</div>`;
     }
 
     if (discountsResult.status === "fulfilled") {
-      renderDiscounts(
-        Array.isArray(discountsResult.value) ? discountsResult.value : [],
-      );
+      discountsAvailable = true;
+      sourceDiscounts = Array.isArray(discountsResult.value) ? discountsResult.value.slice() : [];
     } else {
+      discountsAvailable = false;
       discountGrid.innerHTML = `<div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">${window.ui.escapeHtml(discountsResult.reason?.message || "Discount tickets could not be loaded.")}</div>`;
     }
 
@@ -498,6 +518,7 @@
         `Some ticket data could not be loaded: ${failure.reason?.message || "Request failed."}`,
       );
     }
+    applySearch(ticketSearch?.query() || "");
   }
 
   const normalTab = document.getElementById("normalTicketsTab");
@@ -536,5 +557,6 @@
 
   keepBookingButton.addEventListener("click", hideCancellationConfirmation);
 
+  ticketSearch = searchUtils.createSearch({ mount: "ticketSearch", id: "ticketQuery", placeholder: "Search bookings, routes, trip IDs, buses, status or discounts…", onChange: applySearch });
   loadTickets();
 })();

@@ -59,71 +59,39 @@
           admin.request(`${base}/suggest-route-price-for-deletion`),
           admin.request(`${base}/update-price-for-route-price-suggest`),
         ]);
-      admin.table("tableRoot", api.asArray(a), cols, (o) => {
+      const bindActions = () => {
+        document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(b.dataset.edit, b.dataset.price)));
+        document.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => deactivate(b.dataset.del, "Deactivate this route price?")));
+        document.querySelectorAll("[data-suggested-del]").forEach((b) => (b.onclick = () => deactivate(b.dataset.suggestedDel, "Deactivate this route price?")));
+        document.querySelectorAll("[data-restore]").forEach((b) => (b.onclick = async () => { admin.setLoading(true); try { await admin.request(`${base}/restore-route-price/${b.dataset.restore}`, { method: "PUT" }); await load(); } catch (e) { admin.alert(e.message); } finally { admin.setLoading(false); } }));
+        document.querySelectorAll("[data-apply]").forEach((b) => (b.onclick = () => edit(b.dataset.apply, b.dataset.suggestedPrice)));
+      };
+      const searchFields = [...cols.map((c) => c.keys), ["endCity", "EndCity", "endCityName", "EndCityName"]];
+      admin.searchableTable("tableRoot", api.asArray(a), cols, (o) => {
         const id = admin.esc(admin.pick(o, "routePriceId", "RoutePriceId"));
         const price = admin.esc(admin.pick(o, "price", "Price"));
         return `<button data-edit="${id}" data-price="${price}" class="mr-3 text-teal-700">Edit price</button><button data-del="${id}" class="text-red-700">Deactivate</button>`;
-      });
-      admin.table("deletedRoot", api.asArray(d), cols, (o) => {
+      }, { fields: searchFields, placeholder: "Search active routes by ID, city, bus type or price…", onRender: bindActions });
+      admin.searchableTable("deletedRoot", api.asArray(d), cols, (o) => {
         const id = admin.esc(admin.pick(o, "routePriceId", "RoutePriceId"));
         return `<button data-restore="${id}" class="text-emerald-700">Restore</button>`;
-      });
-      admin.table(
+      }, { fields: searchFields, placeholder: "Search deleted routes…", onRender: bindActions });
+      admin.searchableTable(
         "suggestedDeletionRoot",
         api.asArray(suggestedDeletion),
         cols,
         (o) =>
           `<button data-suggested-del="${admin.esc(admin.pick(o, "routePriceId", "RoutePriceId", "id", "Id"))}" class="text-red-700">Deactivate</button>`,
+        { fields: searchFields, placeholder: "Search route deletion suggestions…", onRender: bindActions },
       );
-      admin.table(
+      admin.searchableTable(
         "suggestedUpdatesRoot",
         api.asArray(suggestedUpdates),
         suggestedCols,
         (o) =>
           `<button data-apply="${admin.esc(admin.pick(o, "routePriceId", "RoutePriceId", "id", "Id"))}" data-suggested-price="${admin.esc(admin.pick(o, "suggestedPriceForRoutePrice", "SuggestedPriceForRoutePrice", "suggestedPrice", "SuggestedPrice", "newPrice", "NewPrice"))}" class="text-teal-700">Apply</button>`,
+        { fields: suggestedCols.map((c) => c.keys), placeholder: "Search price update suggestions…", onRender: bindActions },
       );
-      document
-        .querySelectorAll("[data-edit]")
-        .forEach(
-          (b) => (b.onclick = () => edit(b.dataset.edit, b.dataset.price)),
-        );
-      document.querySelectorAll("[data-del]").forEach(
-        (b) =>
-          (b.onclick = () =>
-            deactivate(b.dataset.del, "Deactivate this route price?")),
-      );
-      document.querySelectorAll("[data-suggested-del]").forEach(
-        (b) =>
-          (b.onclick = () =>
-            deactivate(
-              b.dataset.suggestedDel,
-              "Deactivate this route price?",
-            )),
-      );
-      document.querySelectorAll("[data-restore]").forEach(
-        (b) =>
-          (b.onclick = async () => {
-            admin.setLoading(true);
-            try {
-              await admin.request(
-                `${base}/restore-route-price/${b.dataset.restore}`,
-                { method: "PUT" },
-              );
-              await load();
-            } catch (e) {
-              admin.alert(e.message);
-            } finally {
-              admin.setLoading(false);
-            }
-          }),
-      );
-      document
-        .querySelectorAll("[data-apply]")
-        .forEach(
-          (b) =>
-            (b.onclick = () =>
-              edit(b.dataset.apply, b.dataset.suggestedPrice)),
-        );
       document.getElementById("statsRoot").innerHTML =
         `<div class="rounded-2xl border bg-white p-5"><h2 class="font-bold">Route summary</h2><p class="mt-2 text-sm text-slate-600">Active: ${admin.esc(admin.pick(s, "activeRoutePrices", "ActiveRoutePrices") || 0)} · Deleted: ${admin.esc(admin.pick(s, "deletedRoutePrices", "DeletedRoutePrices") || 0)} · Most-used results: ${api.asArray(m).length} · Least-used results: ${api.asArray(l).length}</p></div>`;
     } catch (e) {

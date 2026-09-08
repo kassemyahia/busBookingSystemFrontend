@@ -12,7 +12,7 @@
     event.preventDefault();
     alert.classList.add("hidden");
     const phone = form.phone.value.trim();
-    if (!/^09\d{8}$/.test(phone)) {
+    if (!validation.validPhone(phone)) {
       alert.textContent =
         "Phone must start with 09 and contain exactly 10 digits.";
       alert.classList.remove("hidden");
@@ -42,4 +42,5 @@
       button.textContent = "Sign in";
     }
   });
+  validation.bindDigits(form.phone, 10);
 })();
