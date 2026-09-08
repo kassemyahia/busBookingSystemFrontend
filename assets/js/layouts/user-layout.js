@@ -19,7 +19,7 @@
       info: "border-cyan-200 bg-teal-50 text-cyan-800",
     };
     el.className = `rounded-xl border px-4 py-3 text-sm ${colors[type] || colors.info}`;
-    el.textContent = message;
+    el.textContent = type === "error" ? api.errorMessage(message) : message;
   }
   function hideAlert(id) {
     document.getElementById(id)?.classList.add("hidden");

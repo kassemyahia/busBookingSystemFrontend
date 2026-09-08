@@ -15,7 +15,7 @@
   function alert(message, type = "error") {
     const e = document.getElementById("pageAlert");
     if (!e) return;
-    e.textContent = message;
+    e.textContent = type === "error" ? api.errorMessage(message) : message;
     e.className = `mb-5 rounded-xl border px-4 py-3 text-sm ${type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`;
   }
   function setLoading(loading, text = "Loading…") {
@@ -95,7 +95,7 @@
         root.innerHTML = "";
       } catch (err) {
         const box = document.getElementById("modalError");
-        box.textContent = err.message;
+        box.textContent = api.errorMessage(err);
         box.classList.remove("hidden");
         b.disabled = false;
         b.textContent = "Save";

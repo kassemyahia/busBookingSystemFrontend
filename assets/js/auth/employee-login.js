@@ -36,7 +36,7 @@
       }
       location.href = "../admin/admin-dashboard.html";
     } catch (error) {
-      alert.textContent = error.message;
+      alert.textContent = api.errorMessage(error);
       alert.classList.remove("hidden");
       button.disabled = false;
       button.textContent = "Sign in";

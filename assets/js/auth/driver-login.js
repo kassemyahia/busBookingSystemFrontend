@@ -20,7 +20,7 @@
       await auth.driverLogin(phone, form.password.value, form.remember.checked);
       location.href = "../driver/driver-dashboard.html";
     } catch (err) {
-      alert.textContent = err.message;
+      alert.textContent = api.errorMessage(err);
       alert.classList.remove("hidden");
       button.disabled = false;
       button.textContent = "Sign in";

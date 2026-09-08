@@ -38,7 +38,7 @@
     try {
       await action();
     } catch (error) {
-      message("error", error.message);
+      message("error", api.errorMessage(error));
     } finally {
       button.disabled = false;
       button.textContent = label;

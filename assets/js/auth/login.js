@@ -212,7 +212,7 @@ loginForm.addEventListener(
     } catch (error) {
       console.error(error);
 
-      let message = error.message || "Login failed.";
+      let message = api.errorMessage(error, "Login failed. Please try again.");
 
       /*
                 fetch() normally gives

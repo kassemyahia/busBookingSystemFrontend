@@ -119,10 +119,7 @@
 
         window.location.href = "../user/trips.html";
       } catch (error) {
-        const message = error.status === 400 && /registration failed/i.test(error.message)
-          ? "Registration failed. The phone or national number may already be in use."
-          : error.message;
-        alert("error", message);
+        alert("error", api.errorMessage(error));
       } finally {
         button.disabled = false;
         button.textContent = "Create account";
