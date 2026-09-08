@@ -46,7 +46,7 @@
       const busTypeId = new FormData(document.getElementById("filters")).get(
         "busTypeId",
       );
-      const [a, d, s, m, l, suggestedDeletion, suggestedUpdates] =
+      const [a, d, s, suggestedDeletion, suggestedUpdates] =
         await admin.safeAll([
           admin.request(
             busTypeId
@@ -55,8 +55,6 @@
           ),
           admin.request(`${base}/all-deleted-route-prices`),
           admin.request(`${base}/route-price-statuses`),
-          admin.request(`${base}/most-used-route-prices`),
-          admin.request(`${base}/least-used-route-prices`),
           admin.request(`${base}/suggest-route-price-for-deletion`),
           admin.request(`${base}/update-price-for-route-price-suggest`),
         ]);
@@ -94,7 +92,7 @@
         { fields: suggestedCols.map((c) => c.keys), placeholder: "Search price update suggestions…", onRender: bindActions },
       );
       document.getElementById("statsRoot").innerHTML =
-        `<div class="rounded-2xl border bg-white p-5"><h2 class="font-bold">Route summary</h2><p class="mt-2 text-sm text-slate-600">Active: ${admin.esc(admin.pick(s, "activeRoutePrices", "ActiveRoutePrices") || 0)} · Deleted: ${admin.esc(admin.pick(s, "deletedRoutePrices", "DeletedRoutePrices") || 0)} · Most-used results: ${api.asArray(m).length} · Least-used results: ${api.asArray(l).length}</p></div>`;
+        `<div class="rounded-2xl border bg-white p-5"><h2 class="font-bold">Route summary</h2><p class="mt-2 text-sm text-slate-600">Active: ${admin.esc(admin.pick(s, "activeRoutePrices", "ActiveRoutePrices") || 0)} · Deleted: ${admin.esc(admin.pick(s, "deletedRoutePrices", "DeletedRoutePrices") || 0)}</p></div>`;
     } catch (e) {
       admin.alert(e.message);
     } finally {
