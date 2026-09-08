@@ -39,7 +39,7 @@
     }
 
     if (status === 409) return "The request conflicts with existing data.";
-    if (status >= 500) return "The API encountered an internal error.";
+    if (status >= 500) return "The service encountered an internal error.";
     return "Something went wrong.";
   }
 
@@ -101,7 +101,7 @@
       response = await makeRequest();
     } catch (error) {
       const networkError = new Error(
-        "Cannot connect to the API. The service may be unavailable.",
+        "Cannot connect to the service. Please try again shortly.",
       );
 
       networkError.isNetworkError = true;

@@ -33,10 +33,11 @@
     e.preventDefault();
     lookup(new FormData(e.target).get("userId"));
   };
-  document.getElementById("assignButton").onclick = () =>
+  document.getElementById("assignButton").onclick = () => {
+    const enteredUserId = document.querySelector('#lookupForm [name="userId"]').value;
     admin.openModal(
       "Assign discount ticket",
-      admin.input("UserId", "User ID", "number", "", 'required min="1"') +
+      admin.input("UserId", "User ID", "number", enteredUserId, 'required min="1"') +
         admin.select(
           "UserDiscountId",
           "Discount",
@@ -62,13 +63,16 @@
           StartDate: f.get("StartDate"),
           EndDate: f.get("EndDate"),
         };
-        await admin.request("/api/admin/user-discount-ticket/add", {
+        const result = await admin.request("/api/admin/user-discount-ticket/add", {
           method: "POST",
           body: JSON.stringify(body),
         });
+        if (typeof result === "string" && /not found/i.test(result))
+          throw new Error(result);
         lookup(body.UserId);
       },
     );
+  };
   try {
     discounts = api.asArray(
       await admin.request("/api/admin/userdiscounts/active-user-discounts"),

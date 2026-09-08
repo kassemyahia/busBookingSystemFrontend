@@ -37,7 +37,7 @@
       "driver",
       "Driver",
     );
-    if (!access) throw new Error("The API did not return an access token.");
+    if (!access) throw new Error("Sign-in could not be completed.");
     clear(localStorage);
     clear(sessionStorage);
     const target = remember ? localStorage : sessionStorage;

@@ -2,7 +2,8 @@
   if (!(await staffLayout.init())) return;
   const base = "/api/employee/route-price";
   let cities = [],
-    types = [];
+    types = [],
+    editableRoutes = [];
   const cols = [
     { label: "ID", keys: ["routePriceId", "RoutePriceId", "id", "Id"] },
     {
@@ -60,17 +61,17 @@
           admin.request(`${base}/update-price-for-route-price-suggest`),
         ]);
       const bindActions = () => {
-        document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(b.dataset.edit, b.dataset.price)));
+        document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(b.dataset.edit)));
         document.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => deactivate(b.dataset.del, "Deactivate this route price?")));
         document.querySelectorAll("[data-suggested-del]").forEach((b) => (b.onclick = () => deactivate(b.dataset.suggestedDel, "Deactivate this route price?")));
         document.querySelectorAll("[data-restore]").forEach((b) => (b.onclick = async () => { admin.setLoading(true); try { await admin.request(`${base}/restore-route-price/${b.dataset.restore}`, { method: "PUT" }); await load(); } catch (e) { admin.alert(e.message); } finally { admin.setLoading(false); } }));
-        document.querySelectorAll("[data-apply]").forEach((b) => (b.onclick = () => edit(b.dataset.apply, b.dataset.suggestedPrice)));
+        document.querySelectorAll("[data-apply]").forEach((b) => (b.onclick = () => editPrice(b.dataset.apply, b.dataset.suggestedPrice)));
       };
       const searchFields = [...cols.map((c) => c.keys), ["endCity", "EndCity", "endCityName", "EndCityName"]];
-      admin.searchableTable("tableRoot", api.asArray(a), cols, (o) => {
+      editableRoutes = api.asArray(a);
+      admin.searchableTable("tableRoot", editableRoutes, cols, (o) => {
         const id = admin.esc(admin.pick(o, "routePriceId", "RoutePriceId"));
-        const price = admin.esc(admin.pick(o, "price", "Price"));
-        return `<button data-edit="${id}" data-price="${price}" class="mr-3 text-teal-700">Edit price</button><button data-del="${id}" class="text-red-700">Deactivate</button>`;
+        return `<button data-edit="${id}" class="mr-3 text-teal-700">Edit route</button><button data-del="${id}" class="text-red-700">Deactivate</button>`;
       }, { fields: searchFields, placeholder: "Search active routes by ID, city, bus type or price…", onRender: bindActions });
       admin.searchableTable("deletedRoot", api.asArray(d), cols, (o) => {
         const id = admin.esc(admin.pick(o, "routePriceId", "RoutePriceId"));
@@ -115,16 +116,95 @@
     });
   }
 
-  function edit(id, price) {
+  function edit(id) {
+    const route = editableRoutes.find(
+      (item) => String(admin.pick(item, "routePriceId", "RoutePriceId")) === String(id),
+    );
+    if (!route) {
+      admin.alert("Route details could not be found. Refresh the page and try again.");
+      return;
+    }
+
+    const current = {
+      BusTypeId: Number(admin.pick(route, "busTypeId", "BusTypeId")),
+      StartCityId: Number(admin.pick(route, "startCityId", "StartCityId")),
+      EndCityId: Number(admin.pick(route, "endCityId", "EndCityId")),
+      Price: Number(admin.pick(route, "price", "Price")),
+      DurationHours: Number(admin.pick(route, "durationHours", "DurationHours")),
+      DistanceKm: Number(admin.pick(route, "distanceKm", "DistanceKm")),
+    };
+
     admin.openModal(
-      "Edit route price",
-      admin.input(
-        "Price",
-        "Price",
-        "number",
-        price,
-        'required min="1" step="0.01"',
-      ),
+      "Edit route details",
+      admin.select(
+        "BusTypeId",
+        "Bus type",
+        types.map((type) => ({
+          value: admin.pick(type, "busTypeId", "BusTypeId"),
+          label: admin.pick(type, "name", "Name"),
+        })),
+        current.BusTypeId,
+      ) +
+        admin.select(
+          "StartCityId",
+          "Start city",
+          cities.map((city) => ({
+            value: admin.pick(city, "id", "Id"),
+            label: admin.pick(city, "name", "Name"),
+          })),
+          current.StartCityId,
+        ) +
+        admin.select(
+          "EndCityId",
+          "End city",
+          cities.map((city) => ({
+            value: admin.pick(city, "id", "Id"),
+            label: admin.pick(city, "name", "Name"),
+          })),
+          current.EndCityId,
+        ) +
+        admin.input("Price", "Price", "number", current.Price, 'required min="1" step="0.01"') +
+        admin.input("DurationHours", "Duration hours", "number", current.DurationHours, 'required min="1" max="24" step="1"') +
+        admin.input("DistanceKm", "Distance (km)", "number", current.DistanceKm, 'required min="1" step="0.01"'),
+      async (f) => {
+        const updated = {
+          BusTypeId: Number(f.get("BusTypeId")),
+          StartCityId: Number(f.get("StartCityId")),
+          EndCityId: Number(f.get("EndCityId")),
+          Price: Number(f.get("Price")),
+          DurationHours: Number(f.get("DurationHours")),
+          DistanceKm: Number(f.get("DistanceKm")),
+        };
+        if (updated.StartCityId === updated.EndCityId)
+          throw new Error("Start and end cities must differ.");
+
+        const paths = {
+          BusTypeId: "/busTypeId",
+          StartCityId: "/startCityId",
+          EndCityId: "/endCityId",
+          Price: "/price",
+          DurationHours: "/durationHours",
+          DistanceKm: "/distanceKm",
+        };
+        const operations = Object.keys(updated)
+          .filter((key) => updated[key] !== current[key])
+          .map((key) => ({ op: "replace", path: paths[key], value: updated[key] }));
+        if (!operations.length) return;
+
+        await admin.request(`${base}/update-route-price/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json-patch+json" },
+          body: JSON.stringify(operations),
+        });
+        load();
+      },
+    );
+  }
+
+  function editPrice(id, price) {
+    admin.openModal(
+      "Apply suggested price",
+      admin.input("Price", "Price", "number", price, 'required min="1" step="0.01"'),
       async (f) => {
         await admin.request(`${base}/update-route-price/${id}`, {
           method: "PATCH",
